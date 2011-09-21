@@ -57,16 +57,18 @@ Command line
 
     generate.py -i <xml file> -p <platform> -g <generator> -n <override with target name> -d <optional path to data> -r <optional path to resource files>
 
-h3. Generators
+### Generators
+
 * visualc
 * xcode
 * makefile
 * codelite
 * codeblocks
 
-h3. Platform.
+### Platform.
 
 Can be any string, but recommended are:
+
 * mac_os_x
 * windows
 * linux
