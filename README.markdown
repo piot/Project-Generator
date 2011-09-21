@@ -6,6 +6,7 @@ Generates project files for numerous compilers, IDE:s and makefiles from a XML d
 Sample XML file
 ---------------
 
+´´´xml
 	<target name="my-project" type="executable">
 		<header directory="include/render" />
 		<source directory="lib/sounds" />
@@ -31,8 +32,9 @@ Sample XML file
 
 		</platform>
 	</target>
+´´´
 
 Command line
 ------------
 
-	generate.py -i <xml file> -p <platform> -g <generator> -n <override with name> -d <optional path to data> -r <optional path to resource files>
+    generate.py -i <xml file> -p <platform> -g <generator> -n <override with name> -d <optional path to data> -r <optional path to resource files>
