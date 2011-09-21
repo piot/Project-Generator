@@ -6,7 +6,7 @@ Generates project files for numerous compilers, IDE:s and makefiles from a XML d
 Sample XML file
 ---------------
 
-´´´xml
+```xml
 	<target name="my-project" type="executable">
 		<header directory="include/render" />
 		<source directory="lib/sounds" />
@@ -32,7 +32,7 @@ Sample XML file
 
 		</platform>
 	</target>
-´´´
+```
 
 Command line
 ------------
