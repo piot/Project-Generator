@@ -11,7 +11,6 @@ class XcodeId():
 	def __str__(self):
 		return self.id_string;
 
-
 class XcodeIdHolder():
 	def __init__(self):
 		self.id = 0
@@ -56,8 +55,6 @@ class XcodeWriterLine(project_writer.ProjectWriter):
 		keyword = add_quotation_marks_when_needed(self.keyword)
 		output.output(keyword + " = " + value + ";" )
 
-
-
 class XcodeWriterCollection(project_writer.ProjectWriter):
 	def __init__(self, keyword, ids):
 		project_writer.ProjectWriter.__init__(self)
@@ -75,7 +72,6 @@ class XcodeWriterCollection(project_writer.ProjectWriter):
 		output.decrease_tabs()
 		output.output( ");")
 
-
 class XcodeWriterDictionary(XcodeWriterScope):
 	def __init__(self, keyword, dictionary):
 		XcodeWriterScope.__init__(self, keyword)
@@ -86,7 +82,6 @@ class XcodeWriterDictionary(XcodeWriterScope):
 		for name in sorted(self.dictionary.iterkeys()):
 			value = self.dictionary[name]
 			output_value(name, value, output)
-
 
 class XcodeProjectSectionObjectWriter(XcodeWriterScope):
 	def __init__(self, keyword, section_object):
@@ -101,7 +96,6 @@ class XcodeProjectSectionObjectWriter(XcodeWriterScope):
 		self.section_object.close(output)
 		XcodeWriterScope.close(self, output)
 
-
 class XcodeWriterDocument(project_writer.ProjectWriter):
 
 	def write(self, output):
@@ -113,7 +107,6 @@ class XcodeWriterDocument(project_writer.ProjectWriter):
 		project_writer.ProjectWriter.close(self, output)
 		output.decrease_tabs();
 		output.output("}");
-
 
 class XcodeReference(project_writer.ProjectWriter):
 	def __init__(self, xcode_id, comment):
@@ -312,13 +305,6 @@ class PBXFileReference(XcodeProjectObject):
 			relative_filename = project_path.Path(self.path).relative(target_path)
 			self.path = relative_filename
 
-	def change_short_name(self, source_path):
-		self.name = os.path.basename(self.path)
-#		extension = os.path.splitext(self.path)[1][1:]
-#		if extension != "framework" and extension != "a" and extension != "app":
-#			self.name = project_path.Path(self.path).relative(source_path)
-#		elif extension == "framework" or extension == "a":
-
 
 class PBXNativeTarget(XcodeProjectObject):
 	def __init__(self, xcode_id, name, product_file_reference, configuration_list, build_phases, product_type):
@@ -340,7 +326,7 @@ class PBXNativeTarget(XcodeProjectObject):
 class PBXProject(XcodeProjectObject):
 	def __init__(self, xcode_id, build_configuration_list, main_group, product_ref_group, target_list):
 		self.buildConfigurationList = build_configuration_list
-		self.compatibilityVersion = "Xcode 3.1";
+		self.compatibilityVersion = "Xcode 3.2";
 		self.hasScannedForEncodings = 1;
 		self.mainGroup = main_group
 		self.productRefGroup = product_ref_group # Not present in Applications!?
@@ -486,26 +472,7 @@ class XcodeDefaultGroupsForApplication(XcodeDefaultGroups):
 		self.root.append_child(self.libraries)
 
 
-class Xcode(XcodeProjectObjectRaw):
-	def __init__(self, project, source_root, platform):
-		self.archiveVersion = 1
-		self.classes = {}
-		self.objectVersion = 45
-		self.objects = XcodeObjects(project, source_root, platform)
-		self.rootObject = self.objects.project
-		comment = "Xcode"
-		XcodeProjectObjectRaw.__init__(self, project, comment)
 
-	def write(self, output):
-		pos = output.target_path.rfind("/", 0, len(output.target_path)-1)
-		build_path = output.target_path[:pos]
-		self.objects.change_target_path_for_file_references(build_path)
-		document = XcodeWriterDocument()
-		self.push(document, output)
-		XcodeProjectObjectRaw.write(self, output)
-
-	def change_short_name_for_file_references(self, source_root):
-		self.objects.change_short_name_for_file_references(source_root)
 
 
 
@@ -526,11 +493,11 @@ class XcodeObjects(XcodeProjectSectionObject):
 		self.configuration_lists = []
 
 		extensions = ["cpp", "c", "h", "pch", "xib", "m", "mm"]
-		self.generate_build_files(source_root, project.source_filenames(), extensions, object_factory, default_groups.classes)
+		self.generate_build_files(source_root, project.settings.source_filenames(), extensions, object_factory, default_groups.classes)
 		extensions = ["plist"]
-		self.generate_file_references(project.source_filenames(), extensions, object_factory, default_groups.resources)
+		self.generate_file_references(project.settings.source_filenames(), extensions, object_factory, default_groups.resources)
 		extensions = None
-		self.generate_build_files(source_root, project.resource_filenames(), extensions, object_factory, default_groups.resources)
+		self.generate_build_files(source_root, project.settings.resource_filenames(), extensions, object_factory, default_groups.resources)
 
 		if project.target_type == "library":
 			project.library_filenames.append("Foundation.framework") # not sure if all libraries need Foundation?
@@ -552,22 +519,19 @@ class XcodeObjects(XcodeProjectSectionObject):
 
 		self.groups = default_groups.flatten_groups()
 
-		self.target_product = self.product(object_factory, default_groups.products, project.name(), project.target_type,  project.library_search_paths)
+		self.target_product = self.product(object_factory, default_groups.products, project.name(), project.target_type,  project.settings.library_search_paths)
 		if project.target_type == "library":
 			self.project = self.create_project_for_library(object_factory, project.name(), default_groups.root_group(), default_groups.products, self.target_product, project.header_paths, project.defines)
 		else:
-			self.project = self.create_project_for_application(object_factory, project.name(), default_groups.root_group(), default_groups.products, self.target_product, project.header_paths, project.defines, platform)
+			self.project = self.create_project_for_application(object_factory, project.name(), default_groups.root_group(), default_groups.products, self.target_product, project.settings.header_paths, project.settings.defines, project.configurations, platform)
 
 		XcodeProjectSectionObject.__init__(self)
 
 
 	def convert_library_names(self, project):
 		new_filenames = []
-		for filename in project.library_filenames:
+		for filename in project.settings.library_filenames:
 			extension = os.path.splitext(filename)[1][1:]
-			if extension == "":
-				filename = "../external/lib/iphone/lib" + filename + ".a"
-
 			new_filenames.append(filename)
 
 		project.library_filenames = new_filenames
@@ -594,8 +558,8 @@ class XcodeObjects(XcodeProjectSectionObject):
 		build_configuration_list = self.create_project_configuration_list_for_library(object_factory, name, header_paths, defines)
 		return object_factory.create(PBXProject, build_configuration_list, root_group, products_group, [target_product])
 
-	def create_project_for_application(self, object_factory, name, root_group, products_group, target_product, header_paths, defines, platform):
-		build_configuration_list = self.create_project_configuration_list_for_application(object_factory, name, header_paths, defines, platform)
+	def create_project_for_application(self, object_factory, name, root_group, products_group, target_product, header_paths, defines, configurations, platform):
+		build_configuration_list = self.create_project_configuration_list_for_application(object_factory, name, header_paths, defines, configurations, platform)
 		return object_factory.create(PBXProject, build_configuration_list, root_group, products_group, [target_product])
 
 	def create_build_configuration(self, object_creator, name, build_settings, comment):
@@ -698,20 +662,18 @@ class XcodeObjects(XcodeProjectSectionObject):
 				"GCC_WARN_UNUSED_VARIABLE": "YES",
 				"GCC_THUMB_SUPPORT": "NO",
 				"COMPRESS_PNG_FILES": "NO",
-				"PREBINDING": "NO",
 				"SDKROOT": "iphoneos",
-				"IPHONEOS_DEPLOYMENT_TARGET": "3.1",
+				"IPHONEOS_DEPLOYMENT_TARGET": "3.2",
 				"HEADER_SEARCH_PATHS": header_paths
 			}
 		elif platform == "mac_os_x":
 			build_settings = {
-				"ARCHS": "i386",
+				"ARCHS": "$(ARCHS_STANDARD_32_BIT)",
 				"GCC_C_LANGUAGE_STANDARD": "c99",
 				"GCC_WARN_ABOUT_RETURN_TYPE": "YES",
 				"GCC_WARN_UNUSED_VARIABLE": "YES",
 				"GCC_THUMB_SUPPORT": "NO",
 				"COMPRESS_PNG_FILES": "NO",
-				"PREBINDING": "NO",
 				"SDKROOT": "macosx",
 				"HEADER_SEARCH_PATHS": header_paths
 			}
@@ -746,20 +708,17 @@ class XcodeObjects(XcodeProjectSectionObject):
 
 	def create_project_debug_configuration_for_application(self, object_creator, name, header_paths, defines, platform):
 		build_settings = self.create_project_build_settings_for_application(header_paths, defines, platform)
-		preprocessor_copy = list(build_settings["GCC_PREPROCESSOR_DEFINITIONS"])
-		preprocessor_copy.append("TORNADO_CONFIG_DEBUG")
-		preprocessor_copy.append("DEBUG")
-		build_settings["GCC_PREPROCESSOR_DEFINITIONS"] = preprocessor_copy
+		build_settings["GCC_PREPROCESSOR_DEFINITIONS"] = build_settings["GCC_PREPROCESSOR_DEFINITIONS"]
 		build_settings["GCC_OPTIMIZATION_LEVEL"] = "0"
 		bc = self.create_build_configuration(object_creator, "Debug", build_settings, "project")
 		return bc
 
-	def create_project_build_configurations_for_application(self, factory, name, header_paths, defines, platform):
+	def create_project_build_configurations_for_application(self, factory, name, header_paths, defines, configurations, platform):
 		build_configurations = [
-			self.create_project_debug_configuration_for_application(factory, name, header_paths, defines, platform),
-			self.create_project_release_configuration_for_application(factory, name, header_paths, defines, platform),
-			self.create_project_adhoc_configuration_for_application(factory, name, header_paths, defines, platform),
-			self.create_project_distribution_configuration_for_application(factory, name, header_paths, defines, platform),
+			self.create_project_debug_configuration_for_application(factory, name, header_paths, defines + configurations["debug"].defines, platform),
+			self.create_project_release_configuration_for_application(factory, name, header_paths, defines + configurations["release"].defines, platform),
+			self.create_project_adhoc_configuration_for_application(factory, name, header_paths, defines + configurations["adhoc"].defines, platform),
+			self.create_project_distribution_configuration_for_application(factory, name, header_paths, defines + configurations["distribution"].defines, platform),
 		]
 
 		return build_configurations
@@ -799,8 +758,8 @@ class XcodeObjects(XcodeProjectSectionObject):
 		configuration_list = self.create_configuration_list(object_creator, target_build_configurations, "target")
 		return configuration_list
 
-	def create_project_configuration_list_for_application(self, object_creator, name, header_paths, defines, platform):
-		project_build_configurations = self.create_project_build_configurations_for_application(object_creator, name, header_paths, defines, platform)
+	def create_project_configuration_list_for_application(self, object_creator, name, header_paths, defines, configurations, platform):
+		project_build_configurations = self.create_project_build_configurations_for_application(object_creator, name, header_paths, defines, configurations, platform)
 		configuration_list = self.create_configuration_list(object_creator, project_build_configurations, "project")
 		return configuration_list
 
@@ -861,6 +820,7 @@ class XcodeObjects(XcodeProjectSectionObject):
 
 	def create_file_reference(self, object_factory, parent_group, filename):
 		filename_reference = object_factory.create(PBXFileReference, filename)
+		filename_reference.name = os.path.basename(filename)
 		parent_group.append_child(filename_reference)
 		self.source_file_references.append(filename_reference)
 		return filename_reference
@@ -893,4 +853,24 @@ class XcodeObjects(XcodeProjectSectionObject):
 	def create_default_groups(self):
 		pass
 
+class Xcode(XcodeProjectObjectRaw):
+	def __init__(self, project, source_root, platform):
+		self.archiveVersion = 1
+		self.classes = {}
+		self.objectVersion = 46
+		self.objects = XcodeObjects(project, source_root, platform)
+		self.rootObject = self.objects.project
+		comment = "Xcode"
+		XcodeProjectObjectRaw.__init__(self, project, comment)
 
+	def write(self, creator, name):
+		output = creator.create_file(name + ".xcodeproj/project.pbxproj")
+		pos = output.target_path.rfind("/", 0, len(output.target_path)-1)
+		build_path = output.target_path[:pos]
+		self.objects.change_target_path_for_file_references(build_path)
+		document = XcodeWriterDocument()
+		self.push(document, output)
+		
+		XcodeProjectObjectRaw.write(self, output)
+		document.close(output)
+		output.close()

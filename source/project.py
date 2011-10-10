@@ -7,7 +7,8 @@ class SourceFileNode:
 		self.filenames = []
 
 	def search_recursive(self, dor, extensions, exclude_basenames):
-		for path, dirs, files in os.walk(dor + "/"):
+		# print("BaseName rec:", dor)
+		for path, dirs, files in os.walk(dor):
 			for filename in files:
 				filename = os.path.abspath(os.path.join(path, filename))
 				filename = filename.replace("\\", "/")
@@ -22,12 +23,13 @@ class SourceFileNode:
 					self.filenames.append(complete_path)
 
 	def search_directory_only(self, dor, extensions, exclude_basenames):
+		# print("BaseName:", dor + "*")
 		filenames = glob.glob(dor + "*")
 		for filename in filenames:
-			
 			filename = filename.replace("\\", "/")
 			basename = os.path.basename(filename)
 
+			# print("filename:", filename, "BaseName:", basename)
 			if basename in exclude_basenames:
 				continue
 
@@ -50,43 +52,17 @@ class Define:
 	def __init__(self, name):
 		self.name = name
 
-class Project:
-	def __init__(self, platform_string):
-		self.header_paths = []
-		self.library_filenames = []
-		self.root_source_files = SourceFileNode()
-		self.root_resource_files = SourceFileNode()
-		self.library_search_paths = []
-		self.platform_string = platform_string
-		self.target_name = None
+class Settings(object):
+	def __init__(self):
 		self.defines = []
-		self.dependency_projects = []
+		self.header_paths = []
+		self.root_source_files = SourceFileNode()
+		self.library_search_paths = []
+		self.library_filenames = []
+		self.root_resource_files = SourceFileNode()
 
-	def merge(self, p):
-		self.header_paths.extend(p.header_paths)
-		self.library_filenames.extend(p.library_filenames)
-		self.root_source_files.filenames.extend(p.root_source_files.filenames)
-		self.library_search_paths.extend(p.library_search_paths)
-		self.defines.extend(p.defines)
-		assert(self.platform_string == p.platform_string)
-
-	def add_dependency(self, filename, merge):
-		self.dependency_projects.append(Dependency(filename, merge))
-		
 	def add_define(self, name):
 		self.defines.append(name)
-
-	def dependencies(self):
-		return self.dependency_projects
-		
-	def set_name(self, name):
-		self.target_name = name
-
-	def set_target_type(self, target_type):
-		self.target_type = target_type
-
-	def name(self):
-		return self.target_name
 
 	def add_header_directory(self, path):
 		self.header_paths.append(path)
@@ -118,8 +94,62 @@ class Project:
 		self.library_filenames.append(library_filename)
 
 	def add_library_search_path(self, path):
-		library_path = path + self.platform_string + "/"
-		self.library_search_paths.append(library_path)
+		self.library_search_paths.append(path)
 
 	def include_paths(self):
 		return self.header_paths
+
+class Configuration(Settings):
+	def __init__(self, name):
+		super(Configuration, self).__init__()		
+		self.name = name
+
+class Project:
+	def __init__(self, platform_string):
+		self.platform_string = platform_string
+		self.target_name = None
+		self.dependency_projects = []
+		self.configurations = {}
+		self.settings = Settings()
+
+	def add_configuration(self, name):
+		config = Configuration(name)
+		self.configurations[name] = config
+		return config
+
+	def configuration(self, name):
+		if name in self.configurations:
+			return self.configurations[name]
+		else:
+			return self.add_configuration(name)
+
+	def settings(self):
+		return self.settings
+
+	def merge(self, p):
+		self.header_paths.extend(p.header_paths)
+		self.library_filenames.extend(p.library_filenames)
+		self.root_source_files.filenames.extend(p.root_source_files.filenames)
+		self.library_search_paths.extend(p.library_search_paths)
+		self.defines.extend(p.defines)
+		config_defines = {}
+		config_defines.update(self.configuration_defines)
+		config_defines.update(p.configuration_defines)
+		self.configuration_defines = config_defines
+		assert(self.platform_string == p.platform_string)
+
+	def add_dependency(self, filename, merge):
+		self.dependency_projects.append(Dependency(filename, merge))
+
+	def dependencies(self):
+		return self.dependency_projects
+
+	def set_name(self, name):
+		self.target_name = name
+
+	def set_target_type(self, target_type):
+		self.target_type = target_type
+
+	def name(self):
+		return self.target_name
+

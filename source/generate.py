@@ -8,6 +8,8 @@ import project_parser
 import project_path
 import makefile
 import visualc
+import codeblocks
+import codelite
 
 import sys
 import os
@@ -18,7 +20,7 @@ def usage():
 
 try:
 	import getopt
-	optlist, list = getopt.getopt(sys.argv[1:], 'p:i:g:', "")
+	optlist, list = getopt.getopt(sys.argv[1:], 'p:i:g:d:n:r:', "")
 except getopt.GetoptError:
 	usage()
 	print("called exception")
@@ -30,6 +32,9 @@ class Options:
 		self.platform_string = ""
 		self.input_filename = ""
 		self.generator_name = ""
+		self.data_path = ""
+		self.resource_path = ""
+		self.project_name = ""
 
 options = Options()
 
@@ -40,6 +45,12 @@ for option, value in optlist:
 		options.input_filename = value
 	elif option == "-g":
 		options.generator_name = value
+	elif option == "-d":
+		options.data_path = os.path.abspath(value)
+	elif option == "-r":
+		options.resource_path = os.path.abspath(value)
+	elif option == "-n":
+		options.project_name = value
 
 import os
 import platform
@@ -54,33 +65,34 @@ def touch(filename):
 				raise
 		open(filename, 'w').close()
 
-def create_project(filename, platform_string):
+def create_project(filename, platform_string, data_path, resource_path):
 	target_project = project.Project(platform_string)
-
 	parser = project_parser.Parser()
 	node = minidom.parse(filename)
 
 	source_root = os.path.abspath(os.path.dirname(filename)) + "/"
 	parser.parse(node, target_project, source_root, platform_string)
 	if target_project.target_type != "library":
-		resource_root = os.path.normpath(os.path.join(source_root, "../data")) + "/"
-		target_project.add_resource_directory(resource_root, False, [])
+		if data_path != None:
+			resource_root = os.path.normpath(data_path) + "/"
+			# print("data:", resource_root)
+			target_project.settings.add_resource_directory(resource_root, False, [])
 
-		resource_root = os.path.normpath(os.path.join(source_root, "../resources")) + "/" + platform_string + "/"
-		print("resource:", resource_root);
-		target_project.add_resource_directory(resource_root, False, [])
+		resource_root = os.path.normpath(resource_path) + "/" + platform_string + "/"
+		# print("Resource:", resource_root)
+		target_project.settings.add_resource_directory(resource_root, False, [])
 
 
 	return target_project
 
 
-def load_project(filename, platform_string):
-	target_project = create_project(filename, platform_string)
+def load_project(filename, platform_string, data_path, resource_path):
+	target_project = create_project(filename, platform_string, data_path, resource_path)
 	for dependency in target_project.dependencies():
 		if not dependency.merge:
 			raise "Not supported!!"
 
-		p = load_project(dependency.filename, platform_string)
+		p = load_project(dependency.filename, platform_string, data_path, resource_path)
 		target_project.merge(p)
 
 	return target_project
@@ -93,34 +105,44 @@ def get_class( kls ):
 	    m = getattr(m, comp)
 	return m
 
-target_project = load_project(options.input_filename, options.platform_string)
+if options.project_name == "":
+	print("Must specify project name")
+	exit(-1)
+
+	
+
+target_project = load_project(options.input_filename, options.platform_string, options.data_path, options.resource_path)
+
+if options.project_name != "":
+	target_project.set_name(options.project_name)
+
+
 source_root = os.path.abspath(os.path.dirname(options.input_filename)) + "/"
 source_root = source_root.replace("\\", "/")
 
-build_dir = project_path.Path(source_root).join("../build/" + options.platform_string + "/")
+build_dir = project_path.Path(source_root).join("../build/" + options.project_name + "/" + options.platform_string + "/")
 build_dir = build_dir.replace("\\", "/")
 
 target_filename_prefix = build_dir
+project_file_name_prefix = options.project_name
 
 if options.generator_name == "xcode":
 	generator_name = "xcode.Xcode"
-	target_filename = target_filename_prefix + target_project.name() + ".xcodeproj/project.pbxproj"
 elif options.generator_name == "makefile":
-	target_filename = target_filename_prefix + "Makefile"
 	generator_name = "makefile.Makefile"
-	platform_specific_library_search_path = project_path.Path(source_root).join("../external/lib/" + options.platform_string + "/")
-	target_project.library_search_paths.append(platform_specific_library_search_path)
+#	platform_specific_library_search_path = project_path.Path(source_root).join("../external/lib/" + options.platform_string + "/")
+#	target_project.library_search_paths.append(platform_specific_library_search_path)
 elif options.generator_name == "visualc":
-	target_filename = target_filename_prefix + target_project.name() + ".vcxproj"
 	generator_name = "visualc.VisualC"
+elif options.generator_name == "codeblocks":
+	generator_name = "codeblocks.CodeBlocks"
+elif options.generator_name == "codelite":
+	generator_name = "codelite.CodeLite"
 
 generator = get_class(generator_name)(target_project, source_root, options.platform_string)
-generator.change_short_name_for_file_references(source_root)
 
 if options.platform_string == "iphone" or options.platform_string == "mac_os_x":
 	touch(build_dir + target_project.name() + "_Prefix.pch")
 
-output = project_writer.ProjectFileOutput(target_filename)
-generator.write(output)
-generator.close(output)
-output.close()
+creator = project_writer.ProjectFileCreator(target_filename_prefix)
+generator.write(creator, project_file_name_prefix)

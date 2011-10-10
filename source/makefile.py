@@ -41,10 +41,10 @@ class Makefile:
 	def change_extension(self, filename, new_extension):
 		return file_without_extension + "." + new_extension
 
-	def write(self, output):
-		self.output = output
+	def write(self, creator, name):
+		self.output = creator.create_file(name + "/Makefile")
 	
-		complete_sources = self.project.source_filenames()
+		complete_sources = self.project.settings.source_filenames()
 		objects = []
 		sources = []
 
@@ -57,13 +57,17 @@ class Makefile:
 				objects.append(file_without_extension + ".o")
 
 
-		includes = self.project.include_paths()
+		includes = self.project.settings.include_paths()
 		include_string = " -I" + " -I".join(includes)
-	
+
+		define_string = "-D" + " -D".join(self.project.configurations["debug"].defines + self.project.settings.defines)
+
+		link_string = "-l" + " -l".join(self.project.settings.library_filenames)	
+
 		self.output_variable_list("cc", ["g++"])
 		self.output_variable_list("c", ["g++", "-x c", "-std=c99"])
-		self.output_variable_list("cflags", ["-c", "-Wall", include_string])
-		self.output_variable_list("ldflags", [])
+		self.output_variable_list("cflags", ["-c", "-Wall", define_string, include_string])
+		self.output_variable_list("ldflags", [link_string])
 
 		self.output_variable_list("sources", sources)
 		self.output_variable_list("objects", objects)
@@ -71,15 +75,15 @@ class Makefile:
 
 		self.output_target_dependencies("all", [self.project.target_name], [])
 		self.output_target_dependencies("clean", "", ["@rm -f $(objects)", "@echo clean done!"])
-		self.output_target_dependencies(self.project.target_name, ["$(sources) $(executable)"], ["echo $<"])
-		self.output_target_dependencies("$(executable)", ["$(objects)"], ["@echo linking $@", "@$(cc) $(ldflags) $(objects) -o $@"])
+		self.output_target_dependencies(self.project.target_name, ["$(sources) $(executable)"], ["@echo 'done'"])
+		self.output_target_dependencies("-include $(objects:.o=.d)", [], [])
+		self.output_target_dependencies("$(executable)", ["$(objects)"], ["@echo Linking $@", "@$(cc) -o $@  $(objects) $(ldflags)"])
 		self.output_target_dependencies(".c.o", [], ["@$(c) $(cflags) $< -o $@"])
 		self.output_target_dependencies(".cpp.o", [], ["@$(cc) $(cflags) $< -o $@"])
 		self.output_target_dependencies("depend", [], ["makedepend -f " + self.output.target_path + "Makefile -- $(cflags) -- $(sources) -I" + include_string])
+		self.close()
+		self.output.close()
 
-	def close(self, output):
+	def close(self):
 		self.output.output("# DO NOT DELETE")
-		pass
-
-	def change_short_name_for_file_references(self, output):
 		pass

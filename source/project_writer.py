@@ -1,5 +1,12 @@
 import os
 
+class ProjectFileCreator:
+	def __init__(self, prefix):
+		self.prefix = prefix
+
+	def create_file(self, name):
+		return ProjectFileOutput(self.prefix + name)
+
 class ProjectOutput:
 	def __init__(self):
 		self.tab_count = 0
@@ -22,7 +29,6 @@ class ProjectOutput:
 			s = s + "\t"
 		return s
 
-
 class ProjectFileOutput(ProjectOutput):
 	def __init__(self, filename):
 		ProjectOutput.__init__(self)
@@ -40,7 +46,6 @@ class ProjectFileOutput(ProjectOutput):
 
 	def write(self, s):
 		self.file.write(s)
-
 
 class ProjectWriter:
 	def __init__(self):
