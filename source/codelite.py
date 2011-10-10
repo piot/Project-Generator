@@ -3,13 +3,10 @@ import os
 import project_path
 import re
 
-
 class CodeLiteNode(object):
 	def __init__(self):
 		self.children = []
 	
-
-
 class Settings(CodeLiteNode):
 	def __init__(self):
 		super(Settings, self).__init__()
@@ -130,7 +127,6 @@ class CodeLite_Project(CodeLiteNode):
 		self.InternalType = "Console"
 		self.generate(project)
 
-
 	def generate(self, project_definition):
 		settings = self.add_global_settings(self.children, project_definition.settings)
 		self.common_compiler_options = "-Wall"
@@ -142,7 +138,6 @@ class CodeLite_Project(CodeLiteNode):
 				options_to_add = ""
 			self.add_configuration(settings.children, config, config.name, config.name, options_to_add)
 		self.add_files(self.children, project_definition)
-
 
 	def add_global_settings(self, parent, project):
 		settings = Settings()
@@ -177,7 +172,6 @@ class CodeLite_Project(CodeLiteNode):
 
 		return settings
 
-
 	def add_configuration(self, parent, settings, configuration_name, readable_name, options_to_add):
 		config = Configuration(readable_name)
 		
@@ -198,7 +192,6 @@ class CodeLite_Project(CodeLiteNode):
 		general = General(configuration_name)
 		config.children.append(general)
 		parent.append(config)
-
 			
 	def add_files(self, parent, project):
 		vdir = VirtualDirectory("Code")
@@ -207,7 +200,6 @@ class CodeLite_Project(CodeLiteNode):
 			f = File(filename)
 			vdir.children.append(f)
 
-
 class CodeLite:
 	def __init__(self, project, source_root, platform):
 		self.output = None
@@ -215,15 +207,12 @@ class CodeLite:
 		self.source_root = source_root
 		self.generate_tree(project)
 
-
 	def generate_tree(self, project):
 		self.root = CodeLite_Project(project)
 		self.workspace = CodeLite_Workspace(project)
 
-
 	def output_name_value(self, name, value):
 		return " " + name + "=\"" + value + "\""
-
 
 	def output_scope_start(self, node):
 		s = "<" + node.__class__.__name__
@@ -244,16 +233,13 @@ class CodeLite:
 		else:
 			s = s + "/>"
 			self.output.output(s);
-
 		
 	def output_scope_end(self, node):
 		self.output.output("</" + node.__class__.__name__ + ">")
 
-		
 	def output_value(self, node):
 		if isinstance(node, CodeLiteNode):
 			self.output_scope_start(node)
-
 
 	def output_node_children(self, children):
 		for child in children:
@@ -277,4 +263,3 @@ class CodeLite:
 
 	def change_short_name_for_file_references(self, output):
 		pass
-

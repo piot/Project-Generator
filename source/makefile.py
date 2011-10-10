@@ -56,7 +56,6 @@ class Makefile:
 				sources.append(relative_source)
 				objects.append(file_without_extension + ".o")
 
-
 		includes = self.project.settings.include_paths()
 		include_string = " -I" + " -I".join(includes)
 

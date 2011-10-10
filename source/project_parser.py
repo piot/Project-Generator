@@ -18,7 +18,6 @@ class Resource:
 		self.recursive = False
 		self.exclude = ""
 
-
 class Platform:
 	def __init__(self):
 		self.name = ""
@@ -130,4 +129,3 @@ class Parser:
 				value = "".join(value_list)
 				item.value = value.split(",")
 			setattr(o, item.name, item.value)
-

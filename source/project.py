@@ -152,4 +152,3 @@ class Project:
 
 	def name(self):
 		return self.target_name
-

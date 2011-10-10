@@ -41,7 +41,6 @@ class Document(project_object.WriterObject):
 	def close(self, output):
 		project_object.WriterObject.close(self.Project, output)
 
-
 class Import(project_object.WriterObject):
 	pass
 

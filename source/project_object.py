@@ -65,7 +65,6 @@ def output_value(value, output):
 	write_object.close(output)
 
 class WriterObject(project_writer.ProjectWriter):
-
 	def write_all_attributes(self, output, exclude_object = None):
 		for name in sorted(self.__dict__.keys()):
 			if exclude_object != None:
@@ -96,7 +95,6 @@ class WriterObject(project_writer.ProjectWriter):
 			value = self.__dict__[name]
 			if isinstance(value, dict):
 				output_value(value, output)
-
 
 	def name(self):
 		return self.__class__.__name__

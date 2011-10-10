@@ -97,7 +97,6 @@ class XcodeProjectSectionObjectWriter(XcodeWriterScope):
 		XcodeWriterScope.close(self, output)
 
 class XcodeWriterDocument(project_writer.ProjectWriter):
-
 	def write(self, output):
 		project_writer.ProjectWriter.write(self, output)
 		output.output("// !$*UTF8*$!\n{");
@@ -142,7 +141,6 @@ def add_quotation_marks_when_needed(value):
 	return value
 
 class XcodeProjectObjectRaw(XcodeReference):
-
 	def write_all_attributes(self, output, exclude_object = None):
 		if not exclude_object:
 			exclude_object = XcodeProjectObject(None, None)
@@ -203,7 +201,6 @@ class PBXResourcesBuildPhase(BuildPhase):
 		comment = "Resources build phase"
 		BuildPhase.__init__(self, xcode_id, comment, file_references)
 
-
 class PBXGroup(XcodeProjectObject):
 	def __init__(self, xcode_id, name, children, absolute_path=None):
 		self.children = children
@@ -229,12 +226,9 @@ class PBXGroup(XcodeProjectObject):
 				except:
 					pass
 		return None
-		
-		
 
 class PBXFileReference(XcodeProjectObject):
 	def __init__(self, xcode_id, path):
-
 		extension = os.path.splitext(path)[1][1:]
 		if extension != "app":
 			self.fileEncoding = 4
@@ -305,7 +299,6 @@ class PBXFileReference(XcodeProjectObject):
 			relative_filename = project_path.Path(self.path).relative(target_path)
 			self.path = relative_filename
 
-
 class PBXNativeTarget(XcodeProjectObject):
 	def __init__(self, xcode_id, name, product_file_reference, configuration_list, build_phases, product_type):
 		self.buildConfigurationList = configuration_list
@@ -322,7 +315,6 @@ class PBXNativeTarget(XcodeProjectObject):
 		comment = name
 		XcodeProjectObject.__init__(self, xcode_id, comment)
 
-
 class PBXProject(XcodeProjectObject):
 	def __init__(self, xcode_id, build_configuration_list, main_group, product_ref_group, target_list):
 		self.buildConfigurationList = build_configuration_list
@@ -336,17 +328,12 @@ class PBXProject(XcodeProjectObject):
 		comment = "Project"
 		XcodeProjectObject.__init__(self, xcode_id, comment)
 
-
-
-
-
 class XCBuildConfiguration(XcodeProjectObject):
 	def __init__(self, xcode_id, name, build_settings, usage):
 		self.buildSettings = build_settings
 		self.name = name;
 		comment = name + " build settings " + usage
 		XcodeProjectObject.__init__(self, xcode_id, comment)
-
 
 class XCConfigurationList(XcodeProjectObject):
 	def __init__(self, xcode_id, build_configurations, default_configuration_name, usage):
@@ -355,7 +342,6 @@ class XCConfigurationList(XcodeProjectObject):
 		self.defaultConfigurationName = default_configuration_name
 		comment = "Build configuration list for " + usage
 		XcodeProjectObject.__init__(self, xcode_id, comment)
-
 
 class XcodeSection(project_writer.ProjectWriter):
 	def __init__(self, section_name):
@@ -371,15 +357,12 @@ class XcodeSection(project_writer.ProjectWriter):
 		output.output("")
 		project_writer.ProjectWriter.close(self, output)
 
-
 class XcodeProjectSectionObject(project_writer.ProjectWriter):
-
 	def write(self, output):
 		project_writer.ProjectWriter.write(self, output)
 		self.write_all_attributes(output)
 
 	def write_all_attributes(self, output, exclude_object=project_writer.ProjectWriter()):
-
 		section_infos = {}
 		for name, value in self.__dict__.iteritems():
 			exclude_properties = exclude_object.__dict__.keys()
@@ -413,7 +396,6 @@ class XcodeProjectSectionObject(project_writer.ProjectWriter):
 					value.close(output)
 			section.close(output)
 
-
 def split_directories(path):
 	directories = path.split("/")
 	directories = directories[:-1]
@@ -437,9 +419,7 @@ def create_directory_groups(object_factory, parent_group, source_root, absolute_
 		parent_group = child_group
 	return parent_group
 
-
 class XcodeDefaultGroups:
-
 	def __init__(self, creator, name):
 		self.classes = creator.create(PBXGroup, "Classes", [])
 		self.other_sources = creator.create(PBXGroup, "Other Sources", [])
@@ -462,7 +442,6 @@ class XcodeDefaultGroups:
 
 		groups.append(group)
 
-
 class XcodeDefaultGroupsForApplication(XcodeDefaultGroups):
 	def __init__(self, creator, name):
 		XcodeDefaultGroups.__init__(self, creator, name)
@@ -470,11 +449,6 @@ class XcodeDefaultGroupsForApplication(XcodeDefaultGroups):
 		self.libraries = creator.create(PBXGroup, "Libraries", [])
 		self.root.append_child(self.resources)
 		self.root.append_child(self.libraries)
-
-
-
-
-
 
 class XcodeObjects(XcodeProjectSectionObject):
 	def __init__(self, project, source_root, platform):
@@ -527,7 +501,6 @@ class XcodeObjects(XcodeProjectSectionObject):
 
 		XcodeProjectSectionObject.__init__(self)
 
-
 	def convert_library_names(self, project):
 		new_filenames = []
 		for filename in project.settings.library_filenames:
@@ -566,7 +539,6 @@ class XcodeObjects(XcodeProjectSectionObject):
 		configuration = object_creator.create(XCBuildConfiguration, name, build_settings, comment)
 		self.build_configurations.append(configuration)
 		return configuration
-
 
 	def create_common_target_build_settings_for_application(self, name, plist_filename, library_search_paths):
 		build_settings = {
@@ -612,7 +584,6 @@ class XcodeObjects(XcodeProjectSectionObject):
 
 		return build_configurations
 
-
 	def create_common_target_build_settings_for_library(self, name):
 		build_settings = {
 			"ALWAYS_SEARCH_USER_PATHS": "NO",
@@ -627,7 +598,6 @@ class XcodeObjects(XcodeProjectSectionObject):
 			"PRODUCT_NAME": name
 		}
 		return build_settings
-
 
 	def create_target_debug_configuration_for_library(self, object_creator, name):
 		build_settings = self.create_common_target_build_settings_for_library(name)
@@ -651,7 +621,6 @@ class XcodeObjects(XcodeProjectSectionObject):
 		]
 
 		return build_configurations
-
 
 	def create_common_project_build_settings(self, header_paths, defines, platform):
 		if platform == "iphone":
@@ -677,13 +646,10 @@ class XcodeObjects(XcodeProjectSectionObject):
 				"SDKROOT": "macosx",
 				"HEADER_SEARCH_PATHS": header_paths
 			}
-			
 		
 		build_settings["GCC_PREPROCESSOR_DEFINITIONS"] = defines
 
 		return build_settings
-
-
 
 	def create_project_build_settings_for_application(self, header_paths, defines, platform):
 		build_settings = self.create_common_project_build_settings(header_paths, defines, platform)
@@ -745,8 +711,6 @@ class XcodeObjects(XcodeProjectSectionObject):
 
 		return build_configurations
 
-
-
 	def create_configuration_list(self, object_creator, build_configurations, usage):
 		default_configuration_name = "Release"
 		configuration_list = object_creator.create(XCConfigurationList, build_configurations, default_configuration_name, usage)
@@ -772,7 +736,6 @@ class XcodeObjects(XcodeProjectSectionObject):
 		project_build_configurations = self.create_project_build_configurations_for_library(object_creator, name, header_paths, defines)
 		configuration_list = self.create_configuration_list(object_creator, project_build_configurations, "project")
 		return configuration_list
-
 
 	def product(self, object_factory, products_group, name, product_type, library_search_paths):
 		if product_type == "library":
@@ -807,7 +770,6 @@ class XcodeObjects(XcodeProjectSectionObject):
 			if extension in extensions_to_match:
 				matching_file_references.append(file_reference)
 		return matching_file_references
-
 
 	def build_files_with_extensions(self, extensions_to_match):
 		matching_build_files = []

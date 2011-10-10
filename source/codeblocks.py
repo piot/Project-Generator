@@ -3,7 +3,6 @@ import os
 import project_path
 import re
 
-
 class CodeBlocksNode(object):
 	def __init__(self):
 		self.children = []
@@ -104,8 +103,6 @@ class Project(CodeBlocksNode):
 		add = Add()
 		add.option = "-g"
 		compiler.children.append(add)
-
-
 	
 	def add_release_target(self, parent, project):
 		target, compiler = self.add_target(parent, project, "Release", "release")
@@ -183,7 +180,6 @@ class Project(CodeBlocksNode):
 		self.add_global_linker_options(self.children, project_definition)
 		self.add_units(self.children, project_definition)
 		self.add_extensions(self.children)
-		
 
 class CodeBlocks:
 	def __init__(self, project, source_root, platform):
