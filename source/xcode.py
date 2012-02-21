@@ -479,7 +479,11 @@ class XcodeObjects(XcodeProjectSectionObject):
 		else:
 			library_build_files = self.create_build_files_for_extension(object_factory, source_root, default_groups.libraries, project.library_filenames, ["a"], "")
 
-		framework_build_files = self.create_build_files_for_extension(object_factory, source_root, default_groups.frameworks, project.library_filenames, ["framework"], "System/Library/Frameworks/")
+		framework_names = []
+		for name in project.settings.framework_names:
+			framework_names.append(name + ".framework")
+			
+		framework_build_files = self.create_build_files_for_extension(object_factory, source_root, default_groups.frameworks, framework_names, ["framework"], "System/Library/Frameworks/")
 		
 		dylib_build_files = self.create_build_files_for_extension(object_factory, source_root, default_groups.frameworks, project.library_filenames, ["dylib"], "System/Library/Frameworks/")
 

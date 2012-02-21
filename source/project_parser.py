@@ -39,6 +39,16 @@ class LibraryPath:
 	def __init__(self):
 		self.directory = ""
 
+class Compiler:
+	def __init__(self):
+		self.flags = ""
+		self.compiler = ""
+
+class Linker:
+	def __init__(self):
+		self.flags = ""
+		self.linker = ""
+
 class Dependency:
 	def __init__(self):
 		self.filename = ""
@@ -91,6 +101,18 @@ class Parser:
 				library_path = LibraryPath()
 				self.parse_object(library_path, sub_node)
 				settings.add_library_search_path(library_path.directory)
+
+			elif sub_node.localName == "compiler":
+				compiler = Compiler()
+				self.parse_object(compiler, sub_node)
+				print("COMPILER: ", compiler.program, compiler.flags)
+				settings.set_compiler(compiler.program, compiler.flags)
+
+			elif sub_node.localName == "linker":
+				linker = Linker()
+				self.parse_object(linker, sub_node)
+				print("LINKER: ", linker.program, linker.flags)
+				settings.set_linker(linker.program, linker.flags)
 
 			elif sub_node.localName == "platform":
 				platform = Platform()

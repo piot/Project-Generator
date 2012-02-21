@@ -22,6 +22,11 @@ class ClCompile(project_object.WriterObject):
 	def __init__(self, relative_file_path):
 		self.Include = relative_file_path
 
+class CompileAs(project_object.WriterObject):
+	def __init__(self, compile_as):
+		self.Include = relative_file_path
+		
+		
 class ClCompileDefinition(project_object.WriterObject):
 	def __init__(self, attribs):
 		project_object.WriterObject.__init__(self)
@@ -99,8 +104,12 @@ class Project(project_object.WriterObject):
 			relative_filename = project_path.Path(filename).relative(write_path)
 			if extension == "h" or extension == "hpp" or extension == "inc":
 				files_to_include_item_group.files.append(ClInclude(relative_filename))
-			elif extension == "cpp" or extension == "c":
+			elif extension == "cpp":
 				files_to_compile_item_group.files.append(ClCompile(relative_filename))
+			elif extension == "c":
+				c = ClCompile(relative_filename)
+				c.other = {"CompileAs": "CompileAsCpp" }
+				files_to_compile_item_group.files.append(c)
 
 		globals_property_group = PropertyGroup()
 		globals_property_group.Label = "Globals"
@@ -112,12 +121,12 @@ class Project(project_object.WriterObject):
 		debug_configuration_property_group = PropertyGroup()
 		debug_configuration_property_group.Condition = "'$(Configuration)|$(Platform)'=='Debug|Win32'"
 		debug_configuration_property_group.Label = "Configuration"
-		debug_configuration_property_group.attribs = {"ConfigurationType": "Application", "UseDebugLibraries": "true", "CharacterSet": "NotSet"}
+		debug_configuration_property_group.attribs = {"ConfigurationType": "Application", "UseDebugLibraries": "true", "PlatformToolset": "v110", "CharacterSet": "NotSet"}
 
 		release_configuration_property_group = PropertyGroup()
 		release_configuration_property_group.Condition = "'$(Configuration)|$(Platform)'=='Release|Win32'"
 		release_configuration_property_group.Label = "Configuration"
-		release_configuration_property_group.attribs = {"ConfigurationType": "Application", "UseDebugLibraries": "false", "CharacterSet": "NotSet"}
+		release_configuration_property_group.attribs = {"ConfigurationType": "Application", "UseDebugLibraries": "false",  "PlatformToolset": "v110", "CharacterSet": "NotSet"}
 
 		self.item_groups = [project_configurations_item_group, files_to_compile_item_group, files_to_include_item_group, globals_property_group, default_props_import, debug_configuration_property_group, release_configuration_property_group]
 

@@ -59,7 +59,11 @@ class Settings(object):
 		self.root_source_files = SourceFileNode()
 		self.library_search_paths = []
 		self.library_filenames = []
+		self.framework_names = []
 		self.root_resource_files = SourceFileNode()
+		self.compiler_executable = None
+		self.compiler_flags = None
+		self.linker_flags = None
 
 	def add_define(self, name):
 		self.defines.append(name)
@@ -91,10 +95,22 @@ class Settings(object):
 		return self.root_source_files.source_filenames()
 
 	def add_library_filename(self, library_filename):
-		self.library_filenames.append(library_filename)
+		if library_filename[-10:] == ".framework":
+			self.framework_names.append(library_filename[:-10])
+		else:
+			self.library_filenames.append(library_filename)
 
 	def add_library_search_path(self, path):
 		self.library_search_paths.append(path)
+
+	def set_compiler(self, compiler, flags):
+		self.compiler_executable = compiler
+		self.compiler_flags = flags
+		print("Compiler:", self.compiler_executable, " flags:", self.compiler_flags)
+
+	def set_linker(self, linker, flags):
+		self.linker_executable = linker
+		self.linker_flags = flags
 
 	def include_paths(self):
 		return self.header_paths

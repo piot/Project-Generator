@@ -42,7 +42,7 @@ class Makefile:
 		return file_without_extension + "." + new_extension
 
 	def write(self, creator, name):
-		self.output = creator.create_file(name + "/Makefile")
+		self.output = creator.create_file("/Makefile")
 	
 		complete_sources = self.project.settings.source_filenames()
 		objects = []
@@ -61,11 +61,22 @@ class Makefile:
 
 		define_string = "-D" + " -D".join(self.project.configurations["debug"].defines + self.project.settings.defines)
 
-		link_string = "-l" + " -l".join(self.project.settings.library_filenames)	
+		if self.project.settings.library_filenames:
+			link_string = "-l" + " -l".join(self.project.settings.library_filenames)
+		else:
+			link_string = "";
 
-		self.output_variable_list("cc", ["g++"])
-		self.output_variable_list("c", ["g++", "-x c", "-std=c99"])
-		self.output_variable_list("cflags", ["-c", "-Wall", define_string, include_string])
+		if self.project.settings.framework_names:
+			link_string += "-framework " + " -framework ".join(self.project.settings.framework_names)	
+		
+		compiler_executable = self.project.settings.compiler_executable or "g++"
+		self.output_variable_list("cc", [compiler_executable])
+		self.output_variable_list("c", [ compiler_executable, "-x c"])
+
+		compiler_flags = self.project.settings.compiler_flags or "-Wall -Wextra -Werror -Wno-unused-parameter -std=c99 -pedantic"
+		self.output_variable_list("cflags", ["-c", define_string, include_string, compiler_flags])
+
+		linker_flags = self.project.settings.linker_flags or "";
 		self.output_variable_list("ldflags", [link_string])
 
 		self.output_variable_list("sources", sources)
@@ -77,8 +88,8 @@ class Makefile:
 		self.output_target_dependencies(self.project.target_name, ["$(sources) $(executable)"], ["@echo 'done'"])
 		self.output_target_dependencies("-include $(objects:.o=.d)", [], [])
 		self.output_target_dependencies("$(executable)", ["$(objects)"], ["@echo Linking $@", "@$(cc) -o $@  $(objects) $(ldflags)"])
-		self.output_target_dependencies(".c.o", [], ["@$(c) $(cflags) $< -o $@"])
-		self.output_target_dependencies(".cpp.o", [], ["@$(cc) $(cflags) $< -o $@"])
+		self.output_target_dependencies(".c.o", [], ["echo Compiling c $@", "@$(c) $(cflags) $< -o $@"])
+		self.output_target_dependencies(".cpp.o", [], ["echo Compiling c++ $@", "@$(cc) $(cflags) $< -o $@"])
 		self.output_target_dependencies("depend", [], ["makedepend -f " + self.output.target_path + "Makefile -- $(cflags) -- $(sources) -I" + include_string])
 		self.close()
 		self.output.close()

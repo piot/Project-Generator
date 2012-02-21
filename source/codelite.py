@@ -192,7 +192,7 @@ class CodeLite_Project(CodeLiteNode):
 		general = General(configuration_name)
 		config.children.append(general)
 		parent.append(config)
-			
+		
 	def add_files(self, parent, project):
 		vdir = VirtualDirectory("Code")
 		parent.append(vdir)
