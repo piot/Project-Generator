@@ -15,7 +15,7 @@ import sys
 import os
 
 def usage():
-	print("generate -i project_definition -p platform -g project_format\nproject_definition: The xml-file that defines the project\nplatform: iphone, mac_os_x, windows or linux\nproject_format: makefile, visualc or xcode")
+	print("generate -i project_definition -p platform -g project_format\nproject_definition: The xml-file that defines the project\nplatform: iphone, mac_os_x, windows or linux\nproject_format: makefile, visualc, xcode, codelite, codeblocks")
 	sys.exit(0)
 
 try:

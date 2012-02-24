@@ -3,6 +3,24 @@ Overview
 
 Generates project files for numerous compilers, IDE:s and makefiles from a XML definition file.
 
+Command line
+------------
+
+    generate.py 
+    	-i <xml file>
+    	-p <platform> 
+       	-g <generator>
+       	[-n <optional override to project name] 
+       	[-d optional path to data]
+       	[-r [optional path to resource files]
+    
+* **-i** *xml_definition_file*. The definition file to use. See below.
+* **-p** *platform_name*. mac_os_x, iphone, windows or linux.
+* **-g** *generator*. visualc, xcode, makefile, codelite or codeblocks.
+* **-n** *project_name*. The name to use for the generated files.
+* **-d** *path_to_data*. Data that should be included in the build. Mostly for iphone (iOS) platforms.
+* **-r** *resource_files*. Resources, such as icons and plist files.
+
 XML tags
 --------
 * *target*. Either an executable or library.
@@ -47,28 +65,7 @@ Sample XML file
 		<configuration name="debug">
 			<define name="LINUX_DEBUG" value="1" />
 		</configuration>
-
 	</platform>
 </target>
 ```
 
-Command line
-------------
-
-    generate.py -i <xml file> -p <platform> -g <generator> -n <override with target name> -d <optional path to data> -r <optional path to resource files>
-
-### Generators
-
-* visualc
-* xcode
-* makefile
-* codelite
-* codeblocks
-
-### Platform.
-
-Can be any string, but recommended are:
-
-* mac_os_x
-* windows
-* linux
