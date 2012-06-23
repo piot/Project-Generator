@@ -40,6 +40,7 @@ class ProjectFileOutput(ProjectOutput):
 				raise
 		self.file = open(filename, 'w')
 		self.target_path = os.path.dirname(filename) + "/"
+		print("Writing to file:", self.target_path)
 
 	def close(self):
 		self.file.close()
