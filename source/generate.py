@@ -136,7 +136,7 @@ elif options.generator_name == "codelite":
 
 generator = get_class(generator_name)(target_project, source_root, options.platform_string)
 
-if options.platform_string == "iphone" or options.platform_string == "mac_os_x":
+if options.platform_string == "ios" or options.platform_string == "mac_os_x":
 	touch(build_dir + target_project.name() + "_Prefix.pch")
 
 creator = project_writer.ProjectFileCreator(target_filename_prefix)

@@ -10,12 +10,12 @@ Command line
     	-i <xml file>
     	-p <platform> 
        	-g <generator>
-       	[-n <optional override to project name] 
+       	[-n optional override to project name] 
        	[-d optional path to data]
-       	[-r [optional path to resource files]
+       	[-r optional path to resource files]
     
 * **-i** *xml_definition_file*. The definition file to use. See below.
-* **-p** *platform_name*. mac_os_x, iphone, windows or linux.
+* **-p** *platform_name*. mac_os_x, ios, windows or linux.
 * **-g** *generator*. visualc, xcode, makefile, codelite or codeblocks.
 * **-n** *project_name*. The name to use for the generated files.
 * **-d** *path_to_data*. Data that should be included in the build. Mostly for iphone (iOS) platforms.

@@ -422,10 +422,9 @@ def create_directory_groups(object_factory, parent_group, source_root, absolute_
 class XcodeDefaultGroups:
 	def __init__(self, creator, name):
 		self.classes = creator.create(PBXGroup, "Classes", [])
-		self.other_sources = creator.create(PBXGroup, "Other Sources", [])
 		self.frameworks = creator.create(PBXGroup, "Frameworks", [])
 		self.products = creator.create(PBXGroup, "Products", [])
-		self.root = creator.create(PBXGroup, name, [self.classes, self.other_sources, self.frameworks, self.products])
+		self.root = creator.create(PBXGroup, name, [self.classes, self.frameworks, self.products])
 
 	def flatten_groups(self):
 		groups = []
@@ -627,7 +626,7 @@ class XcodeObjects(XcodeProjectSectionObject):
 		return build_configurations
 
 	def create_common_project_build_settings(self, header_paths, defines, platform):
-		if platform == "iphone":
+		if platform == "ios":
 			build_settings = {
 				"ARCHS": "$(ARCHS_STANDARD_32_BIT)",
 				"GCC_C_LANGUAGE_STANDARD": "c99",
