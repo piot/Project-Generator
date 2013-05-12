@@ -82,7 +82,7 @@ class Settings(object):
 			self.root_source_files.search_directory_only(path, extensions, exclude_list)
 
 	def add_resource_directory(self, path, recursive, exclude_list):
-		extensions = ["png", "oes", "oeb", "oec", "jpg", "ogg", "icns", "plist"]
+		extensions = ["png", "xib", "storyboard", "oes", "oeb", "oec", "jpg", "ogg", "icns", "plist"]
 		if recursive:
 			self.root_resource_files.search_recursive(path, extensions, exclude_list)
 		else:

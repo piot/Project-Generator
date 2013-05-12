@@ -134,6 +134,8 @@ def add_quotation_marks_when_needed(value):
 	if isinstance(value, XcodeReference):
 		return str(value)
 
+
+
 	value = str(value)
 	all_characters_are_representable = re.match('[a-zA-Z./_0-9]*', value)
 	if value == "" or (not all_characters_are_representable) or all_characters_are_representable.group(0) != value:
@@ -173,6 +175,10 @@ class PBXBuildFile(XcodeProjectObject):
 
 		XcodeProjectObject.__init__(self, xcode_id, comment)
 
+	def change_target_path(self, target_path):
+		pass
+		# self.fileRef.change_target_path(target_path)
+
 class BuildPhase(XcodeProjectObject):
 	def __init__(self, xcode_id, comment, file_references):
 		self.files = file_references
@@ -202,15 +208,11 @@ class PBXResourcesBuildPhase(BuildPhase):
 		BuildPhase.__init__(self, xcode_id, comment, file_references)
 
 class PBXGroup(XcodeProjectObject):
-	def __init__(self, xcode_id, name, children, absolute_path=None):
+	def __init__(self, xcode_id, name, children):
 		self.children = children
 		self.name = name
 			
-		if absolute_path:
-			self.path = absolute_path
-			self.sourceTree = "<absolute>"
-		else:
-			self.sourceTree = "<group>"
+		self.sourceTree = "<group>"
 		comment = name
 		XcodeProjectObject.__init__(self, xcode_id, comment)
 
@@ -226,6 +228,27 @@ class PBXGroup(XcodeProjectObject):
 				except:
 					pass
 		return None
+
+class FilePath:
+	def __init__(self, file_reference):
+		self.file_reference = file_reference
+
+	def __str__(self):
+		return self.file_reference.path
+
+class FilePaths:
+	def __init__(self, file_references):
+		self.paths = []
+		for file_reference in file_references:
+			self.paths.append(FilePath(file_reference))
+
+	def __str__(self):
+		s = ""
+		for path in self.paths:
+			s = s + str(path)
+
+		return s
+
 
 class PBXFileReference(XcodeProjectObject):
 	def __init__(self, xcode_id, path):
@@ -267,6 +290,9 @@ class PBXFileReference(XcodeProjectObject):
 		elif extension == "xib":
 			self.lastKnownFileType = "file.xib"
 			self.sourceTree = "SOURCE_ROOT"
+		elif extension == "storyboard":
+			self.lastKnownFileType = "file.storyboard"
+			self.sourceTree = "SOURCE_ROOT"
 		elif extension == "oes":
 			self.lastKnownFileType = "text"
 			self.sourceTree = "SOURCE_ROOT"
@@ -286,8 +312,8 @@ class PBXFileReference(XcodeProjectObject):
 			self.explicitFileType = "wrapper.application"
 			self.sourceTree = "BUILT_PRODUCTS_DIR"
 			self.includeInIndex = 0
-		else:
-			raise Exception("Unknown extension:" + extension)
+#		else:
+#			raise Exception("Unknown extension:" + extension)
 
 		self.path = path
 		comment = os.path.basename(path)
@@ -414,7 +440,7 @@ def create_directory_groups(object_factory, parent_group, source_root, absolute_
 
 		child_group = parent_group.find(directory)
 		if not child_group:
-			child_group = object_factory.create(PBXGroup, directory, [], absolute_directory)
+			child_group = object_factory.create(PBXGroup, directory, [])
 			parent_group.append_child(child_group)
 		parent_group = child_group
 	return parent_group
@@ -465,7 +491,7 @@ class XcodeObjects(XcodeProjectSectionObject):
 		self.build_configurations = []
 		self.configuration_lists = []
 
-		extensions = ["cpp", "c", "h", "pch", "xib", "m", "mm"]
+		extensions = ["cpp", "c", "h", "pch", "xib", "storyboard", "m", "mm"]
 		self.generate_build_files(source_root, project.settings.source_filenames(), extensions, object_factory, default_groups.classes)
 		extensions = ["plist"]
 		self.generate_file_references(project.settings.source_filenames(), extensions, object_factory, default_groups.resources)
@@ -498,11 +524,23 @@ class XcodeObjects(XcodeProjectSectionObject):
 
 		self.target_product = self.product(object_factory, default_groups.products, project.name(), project.target_type,  project.settings.library_search_paths)
 		if project.target_type == "library":
-			self.project = self.create_project_for_library(object_factory, project.name(), default_groups.root_group(), default_groups.products, self.target_product, project.header_paths, project.defines)
+			header_paths = self.create_header_paths(object_factory, project.header_paths)
+			self.project = self.create_project_for_library(object_factory, project.name(), default_groups.root_group(), default_groups.products, self.target_product, header_paths, project.defines)
 		else:
-			self.project = self.create_project_for_application(object_factory, project.name(), default_groups.root_group(), default_groups.products, self.target_product, project.settings.header_paths, project.settings.defines, project.configurations, platform)
+
+			header_paths = self.create_header_paths(object_factory, project.settings.header_paths)
+			self.project = self.create_project_for_application(object_factory, project.name(), default_groups.root_group(), default_groups.products, self.target_product, header_paths, project.settings.defines, project.configurations, platform)
 
 		XcodeProjectSectionObject.__init__(self)
+
+	def create_header_paths(self, object_factory, header_paths):
+		file_references = []
+		for header_path in header_paths:
+			file_reference = self.create_invisible_file_reference(object_factory, header_path)
+			file_references.append(file_reference)
+
+		return FilePaths(file_references)
+
 
 	def convert_library_names(self, project):
 		new_filenames = []
@@ -524,6 +562,9 @@ class XcodeObjects(XcodeProjectSectionObject):
 
 	def change_target_path_for_file_references(self, target_path):
 		for file_reference in self.source_file_references:
+			file_reference.change_target_path(target_path)
+
+		for file_reference in self.build_files:
 			file_reference.change_target_path(target_path)
 
 	def change_short_name_for_file_references(self, source_path):
@@ -551,7 +592,7 @@ class XcodeObjects(XcodeProjectSectionObject):
 			"GCC_THUMB_SUPPORT": "NO",
 			"INFOPLIST_FILE": plist_filename,
 			"LIBRARY_SEARCH_PATHS": library_search_paths,
-			"PRODUCT_NAME": name,
+			"PRODUCT_NAME": name
 		}
 		return build_settings
 
@@ -635,8 +676,9 @@ class XcodeObjects(XcodeProjectSectionObject):
 				"GCC_THUMB_SUPPORT": "NO",
 				"COMPRESS_PNG_FILES": "NO",
 				"SDKROOT": "iphoneos",
-				"IPHONEOS_DEPLOYMENT_TARGET": "3.2",
-				"HEADER_SEARCH_PATHS": header_paths
+				"IPHONEOS_DEPLOYMENT_TARGET": 5.1,
+				"HEADER_SEARCH_PATHS": header_paths,
+				"TARGETED_DEVICE_FAMILY": "1,2"
 			}
 		elif platform == "mac_os_x":
 			build_settings = {
@@ -743,14 +785,19 @@ class XcodeObjects(XcodeProjectSectionObject):
 	def product(self, object_factory, products_group, name, product_type, library_search_paths):
 		if product_type == "library":
 			target_filename = "lib" + name + ".a"
-			target_configuration_list = self.create_target_configuration_list_for_library(object_factory, name)
 		else:
 			target_filename = name + ".app"
-			plist_filename = self.file_references_with_extensions(["plist"])[0].path
-			target_configuration_list = self.create_target_configuration_list_for_application(object_factory, name, plist_filename, library_search_paths)
 
 		product_file_reference = self.create_file_reference(object_factory, products_group, target_filename)
 		build_phases = [self.headers_build_phase, self.resources_build_phase, self.sources_build_phase, self.frameworks_build_phase]
+		if product_type == "library":
+			target_configuration_list = self.create_target_configuration_list_for_library(object_factory, name)
+		else:
+			plist_filename = self.file_references_with_extensions(["plist"])[0]
+			plist_file_path = FilePath(plist_filename)
+			target_configuration_list = self.create_target_configuration_list_for_application(object_factory, name, plist_file_path, library_search_paths)
+
+
 		return object_factory.create(PBXNativeTarget, name, product_file_reference, target_configuration_list, build_phases, product_type)
 
 	def all_source_build_files(self, project):
@@ -760,10 +807,10 @@ class XcodeObjects(XcodeProjectSectionObject):
 		return self.build_files_with_extensions(["pch", "h"])
 
 	def all_resource_build_files(self, project):
-		return self.build_files_with_extensions(["xib", "png", "ogg", "oes", "oeb", "oec", "icns", "fnt"])
+		return self.build_files_with_extensions(["xib", "storyboard", "png", "ogg", "oes", "oeb", "oec", "icns", "fnt"])
 
 	def all_resource_file_references(self):
-		return self.file_references_with_extensions(["plist", "xib", "png", "ogg", "oes", "oeb", "oec", "icns", "fnt"])
+		return self.file_references_with_extensions(["plist", "xib", "storyboard", "png", "ogg", "oes", "oeb", "oec", "icns", "fnt"])
 
 	def file_references_with_extensions(self, extensions_to_match):
 		matching_file_references = []
@@ -784,11 +831,16 @@ class XcodeObjects(XcodeProjectSectionObject):
 		return matching_build_files
 
 	def create_file_reference(self, object_factory, parent_group, filename):
+		filename_reference = self.create_invisible_file_reference(object_factory, filename)
+		parent_group.append_child(filename_reference)
+		return filename_reference
+
+	def create_invisible_file_reference(self, object_factory, filename):
 		filename_reference = object_factory.create(PBXFileReference, filename)
 		filename_reference.name = os.path.basename(filename)
-		parent_group.append_child(filename_reference)
 		self.source_file_references.append(filename_reference)
-		return filename_reference
+		return filename_reference		
+
 
 	def create_build_file(self, object_factory, source_root, filename, root_group):
 		parent_group = root_group
