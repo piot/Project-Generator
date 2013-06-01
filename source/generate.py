@@ -20,7 +20,7 @@ def usage():
 
 try:
 	import getopt
-	optlist, list = getopt.getopt(sys.argv[1:], 'p:i:g:d:n:r:', "")
+	optlist, list = getopt.getopt(sys.argv[1:], 'p:i:g:d:n:r:o:', "")
 except getopt.GetoptError:
 	usage()
 	print("called exception")
@@ -34,6 +34,7 @@ class Options:
 		self.data_path = ""
 		self.resource_path = ""
 		self.project_name = ""
+		self.target_path = ""
 
 options = Options()
 
@@ -50,6 +51,8 @@ for option, value in optlist:
 		options.resource_path = os.path.abspath(value)
 	elif option == "-n":
 		options.project_name = value
+	elif option == "-o":
+		options.target_path = os.path.abspath(value)
 
 import os
 import platform
@@ -115,7 +118,7 @@ if options.project_name != "":
 source_root = os.path.abspath(os.path.dirname(options.input_filename)) + "/"
 source_root = source_root.replace("\\", "/")
 
-build_dir = project_path.Path(source_root).join("../build/" + options.project_name + "/" + options.platform_string + "/")
+build_dir = options.target_path + "/" + options.platform_string + "/"
 build_dir = build_dir.replace("\\", "/")
 
 target_filename_prefix = build_dir
