@@ -270,7 +270,10 @@ class PBXFileReference(XcodeProjectObject):
 			self.sourceTree = "<group>"
 		elif extension == "framework":
 			self.lastKnownFileType = "wrapper.framework"
-			self.sourceTree = "SDKROOT"
+			if path[0:3] == "../":
+				self.sourceTree = "<group>"
+			else:
+				self.sourceTree = "SDKROOT"
 		elif extension == "dylib":
 			self.lastKnownFileType = "wrapper.framework"
 			self.sourceTree = "SDKROOT"
@@ -321,7 +324,7 @@ class PBXFileReference(XcodeProjectObject):
 
 	def change_target_path(self, target_path):
 		extension = os.path.splitext(self.path)[1][1:]
-		if extension != "framework" and extension != "dylib" and extension != "app" and os.path.dirname(self.path) != "":
+		if self.path[0:7] != "System/" and extension != "dylib" and extension != "app" and os.path.dirname(self.path) != "":
 			relative_filename = project_path.Path(self.path).relative(target_path)
 			self.path = relative_filename
 
@@ -507,6 +510,8 @@ class XcodeObjects(XcodeProjectSectionObject):
 		framework_names = []
 		for name in project.settings.framework_names:
 			framework_names.append(name + ".framework")
+
+
 			
 		framework_build_files = self.create_build_files_for_extension(object_factory, source_root, default_groups.frameworks, framework_names, ["framework"], "System/Library/Frameworks/")
 		
@@ -522,7 +527,7 @@ class XcodeObjects(XcodeProjectSectionObject):
 
 		self.groups = default_groups.flatten_groups()
 
-		self.target_product = self.product(object_factory, default_groups.products, project.name(), project.target_type,  project.settings.library_search_paths)
+		self.target_product = self.product(object_factory, default_groups.products, project.name(), project.target_type,  project.settings.library_search_paths, project.settings.framework_search_paths)
 		if project.target_type == "library":
 			header_paths = self.create_header_paths(object_factory, project.header_paths)
 			self.project = self.create_project_for_library(object_factory, project.name(), default_groups.root_group(), default_groups.products, self.target_product, header_paths, project.defines)
@@ -555,7 +560,11 @@ class XcodeObjects(XcodeProjectSectionObject):
 		for filename in filenames:
 			extension = os.path.splitext(filename)[1][1:]
 			if extension in extensions:
-				build_file = self.create_build_file(object_factory, source_root, path_prefix + filename, root_group)
+				if extension == "framework" and filename[0:3] == "../":
+					use_filename = filename
+				else:
+					use_filename = path_prefix + filename
+				build_file = self.create_build_file(object_factory, source_root, use_filename, root_group)
 				build_files.append(build_file)
 
 		return build_files
@@ -584,7 +593,7 @@ class XcodeObjects(XcodeProjectSectionObject):
 		self.build_configurations.append(configuration)
 		return configuration
 
-	def create_common_target_build_settings_for_application(self, name, plist_filename, library_search_paths):
+	def create_common_target_build_settings_for_application(self, name, plist_filename, library_search_paths, framework_search_paths):
 		build_settings = {
 			"ALWAYS_SEARCH_USER_PATHS": "NO",
 			"GCC_PRECOMPILE_PREFIX_HEADER": "YES",
@@ -592,38 +601,39 @@ class XcodeObjects(XcodeProjectSectionObject):
 			"GCC_THUMB_SUPPORT": "NO",
 			"INFOPLIST_FILE": plist_filename,
 			"LIBRARY_SEARCH_PATHS": library_search_paths,
+			"FRAMEWORK_SEARCH_PATHS": framework_search_paths,
 			"PRODUCT_NAME": name
 		}
 		return build_settings
 
-	def create_target_debug_configuration_for_application(self, object_creator, name, plist_filename, library_search_paths):
-		build_settings = self.create_common_target_build_settings_for_application(name, plist_filename, library_search_paths)
+	def create_target_debug_configuration_for_application(self, object_creator, name, plist_filename, library_search_paths, framework_search_paths):
+		build_settings = self.create_common_target_build_settings_for_application(name, plist_filename, library_search_paths, framework_search_paths)
 		build_settings["COPY_PHASE_STRIP"] = "NO"
 		build_settings["GCC_DYNAMIC_NO_PIC"] = "NO"
 		build_settings["GCC_OPTIMIZATION_LEVEL"] = 0
 		return self.create_build_configuration(object_creator, "Debug", build_settings, "target")
 
-	def create_target_release_configuration_for_application(self, object_creator, name, plist_filename, library_search_paths):
-		build_settings = self.create_common_target_build_settings_for_application(name, plist_filename, library_search_paths)
+	def create_target_release_configuration_for_application(self, object_creator, name, plist_filename, library_search_paths, framework_search_paths):
+		build_settings = self.create_common_target_build_settings_for_application(name, plist_filename, library_search_paths, framework_search_paths)
 		build_settings["COPY_PHASE_STRIP"] = "YES"
 		return self.create_build_configuration(object_creator, "Release", build_settings, "target")
 
-	def create_target_adhoc_configuration_for_application(self, object_creator, name, plist_filename, library_search_paths):
-		build_settings = self.create_common_target_build_settings_for_application(name, plist_filename, library_search_paths)
+	def create_target_adhoc_configuration_for_application(self, object_creator, name, plist_filename, library_search_paths, framework_search_paths):
+		build_settings = self.create_common_target_build_settings_for_application(name, plist_filename, library_search_paths, framework_search_paths)
 		build_settings["COPY_PHASE_STRIP"] = "YES"
 		return self.create_build_configuration(object_creator, "AdHoc", build_settings, "target")
 
-	def create_target_distribution_configuration_for_application(self, object_creator, name, plist_filename, library_search_paths):
-		build_settings = self.create_common_target_build_settings_for_application(name, plist_filename, library_search_paths)
+	def create_target_distribution_configuration_for_application(self, object_creator, name, plist_filename, library_search_paths, framework_search_paths):
+		build_settings = self.create_common_target_build_settings_for_application(name, plist_filename, library_search_paths, framework_search_paths)
 		build_settings["COPY_PHASE_STRIP"] = "YES"
 		return self.create_build_configuration(object_creator, "AppStore", build_settings, "target")
 
-	def create_target_build_configurations_for_application(self, factory, name, plist_filename, library_search_paths):
+	def create_target_build_configurations_for_application(self, factory, name, plist_filename, library_search_paths, framework_search_paths):
 		build_configurations = [
-			self.create_target_debug_configuration_for_application(factory, name, plist_filename, library_search_paths),
-			self.create_target_release_configuration_for_application(factory, name, plist_filename, library_search_paths),
-			self.create_target_adhoc_configuration_for_application(factory, name, plist_filename, library_search_paths),
-			self.create_target_distribution_configuration_for_application(factory, name, plist_filename, library_search_paths),
+			self.create_target_debug_configuration_for_application(factory, name, plist_filename, library_search_paths, framework_search_paths),
+			self.create_target_release_configuration_for_application(factory, name, plist_filename, library_search_paths, framework_search_paths),
+			self.create_target_adhoc_configuration_for_application(factory, name, plist_filename, library_search_paths, framework_search_paths),
+			self.create_target_distribution_configuration_for_application(factory, name, plist_filename, library_search_paths, framework_search_paths),
 		]
 
 		return build_configurations
@@ -762,8 +772,8 @@ class XcodeObjects(XcodeProjectSectionObject):
 		self.configuration_lists.append(configuration_list)
 		return configuration_list
 
-	def create_target_configuration_list_for_application(self, object_creator, name, plist_filename, library_search_paths):
-		target_build_configurations = self.create_target_build_configurations_for_application(object_creator, name, plist_filename, library_search_paths)
+	def create_target_configuration_list_for_application(self, object_creator, name, plist_filename, library_search_paths, framework_search_paths):
+		target_build_configurations = self.create_target_build_configurations_for_application(object_creator, name, plist_filename, library_search_paths, framework_search_paths)
 		configuration_list = self.create_configuration_list(object_creator, target_build_configurations, "target")
 		return configuration_list
 
@@ -782,7 +792,7 @@ class XcodeObjects(XcodeProjectSectionObject):
 		configuration_list = self.create_configuration_list(object_creator, project_build_configurations, "project")
 		return configuration_list
 
-	def product(self, object_factory, products_group, name, product_type, library_search_paths):
+	def product(self, object_factory, products_group, name, product_type, library_search_paths, framework_search_paths):
 		if product_type == "library":
 			target_filename = "lib" + name + ".a"
 		else:
@@ -795,7 +805,7 @@ class XcodeObjects(XcodeProjectSectionObject):
 		else:
 			plist_filename = self.file_references_with_extensions(["plist"])[0]
 			plist_file_path = FilePath(plist_filename)
-			target_configuration_list = self.create_target_configuration_list_for_application(object_factory, name, plist_file_path, library_search_paths)
+			target_configuration_list = self.create_target_configuration_list_for_application(object_factory, name, plist_file_path, library_search_paths, framework_search_paths)
 
 
 		return object_factory.create(PBXNativeTarget, name, product_file_reference, target_configuration_list, build_phases, product_type)

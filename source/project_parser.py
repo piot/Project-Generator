@@ -1,4 +1,5 @@
 import project_path
+import os
 
 class Target:
 	def __init__(self):
@@ -36,6 +37,10 @@ class Library:
 		self.filename = ""
 
 class LibraryPath:
+	def __init__(self):
+		self.directory = ""
+
+class FrameworkPath:
 	def __init__(self):
 		self.directory = ""
 
@@ -96,6 +101,13 @@ class Parser:
 				library = Library()
 				self.parse_object(library, sub_node)
 				settings.add_library_filename(library.filename)
+				extension = os.path.splitext(library.filename)[1][1:]
+				if extension == "framework":
+					if library.filename[0:3] == "../":
+						library.filename = self.convert_path(library.filename)
+						directory = os.path.dirname(library.filename[0:-1])
+						settings.add_framework_search_path(directory)
+
 
 			elif sub_node.localName == "library-path":
 				library_path = LibraryPath()

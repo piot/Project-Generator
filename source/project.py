@@ -60,6 +60,7 @@ class Settings(object):
 		self.library_search_paths = []
 		self.library_filenames = []
 		self.framework_names = []
+		self.framework_search_paths = []
 		self.root_resource_files = SourceFileNode()
 		self.compiler_executable = None
 		self.compiler_flags = None
@@ -102,6 +103,9 @@ class Settings(object):
 
 	def add_library_search_path(self, path):
 		self.library_search_paths.append(path)
+
+	def add_framework_search_path(self, path):
+		self.framework_search_paths.append(path)
 
 	def set_compiler(self, compiler, flags):
 		self.compiler_executable = compiler
