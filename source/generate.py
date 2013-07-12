@@ -128,8 +128,6 @@ if options.generator_name == "xcode":
 	generator_name = "xcode.Xcode"
 elif options.generator_name == "makefile":
 	generator_name = "makefile.Makefile"
-#	platform_specific_library_search_path = project_path.Path(source_root).join("../external/lib/" + options.platform_string + "/")
-#	target_project.library_search_paths.append(platform_specific_library_search_path)
 elif options.generator_name == "visualc":
 	generator_name = "visualc.VisualC"
 elif options.generator_name == "codeblocks":

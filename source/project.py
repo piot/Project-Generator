@@ -6,6 +6,9 @@ class SourceFileNode:
 	def __init__(self):
 		self.filenames = []
 
+	def extend(self, other):
+		self.filenames.extend(other.filenames)
+
 	def search_recursive(self, dor, extensions, exclude_basenames):
 		# print("BaseName rec:", dor)
 		for path, dirs, files in os.walk(dor):
@@ -63,8 +66,21 @@ class Settings(object):
 		self.framework_search_paths = []
 		self.root_resource_files = SourceFileNode()
 		self.compiler_executable = None
-		self.compiler_flags = None
-		self.linker_flags = None
+		self.compiler_flags = []
+		self.linker_flags = []
+
+	def extend(self, setting):
+		self.defines.extend(setting.defines)
+		self.header_paths.extend(setting.header_paths)
+		self.root_source_files.extend(setting.root_source_files)
+		self.library_search_paths.extend(setting.library_search_paths)
+		self.library_filenames.extend(setting.library_filenames)
+		self.framework_names.extend(setting.framework_names)
+		self.framework_search_paths.extend(setting.framework_search_paths)
+		self.root_resource_files.extend(setting.root_resource_files)
+		self.compiler_executable = setting.compiler_executable
+		self.compiler_flags.extend(setting.compiler_flags)
+		self.linker_flags.extend(setting.linker_flags)
 
 	def add_define(self, name):
 		self.defines.append(name)
@@ -147,16 +163,9 @@ class Project:
 		return self.settings
 
 	def merge(self, p):
-		self.header_paths.extend(p.header_paths)
-		self.library_filenames.extend(p.library_filenames)
-		self.root_source_files.filenames.extend(p.root_source_files.filenames)
-		self.library_search_paths.extend(p.library_search_paths)
-		self.defines.extend(p.defines)
-		config_defines = {}
-		config_defines.update(self.configuration_defines)
-		config_defines.update(p.configuration_defines)
-		self.configuration_defines = config_defines
+		self.settings.extend(p.settings)
 		assert(self.platform_string == p.platform_string)
+		self.configurations = p.configurations
 
 	def add_dependency(self, filename, merge):
 		self.dependency_projects.append(Dependency(filename, merge))

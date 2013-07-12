@@ -177,7 +177,6 @@ class PBXBuildFile(XcodeProjectObject):
 
 	def change_target_path(self, target_path):
 		pass
-		# self.fileRef.change_target_path(target_path)
 
 class BuildPhase(XcodeProjectObject):
 	def __init__(self, xcode_id, comment, file_references):
@@ -243,11 +242,11 @@ class FilePaths:
 			self.paths.append(FilePath(file_reference))
 
 	def __str__(self):
-		s = ""
+		paths = []
 		for path in self.paths:
-			s = s + str(path)
+			paths.append(str(path))
 
-		return s
+		return " ".join(paths)
 
 
 class PBXFileReference(XcodeProjectObject):
