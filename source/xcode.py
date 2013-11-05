@@ -600,7 +600,7 @@ class XcodeObjects(XcodeProjectSectionObject):
 			"GCC_THUMB_SUPPORT": "NO",
 			"INFOPLIST_FILE": plist_filename,
 			"LIBRARY_SEARCH_PATHS": library_search_paths,
-			"FRAMEWORK_SEARCH_PATHS": framework_search_paths,
+			# "FRAMEWORK_SEARCH_PATHS": framework_search_paths,
 			"PRODUCT_NAME": name
 		}
 		return build_settings
