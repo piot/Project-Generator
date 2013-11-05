@@ -73,7 +73,7 @@ class Makefile:
 		self.output_variable_list("cc", [compiler_executable])
 		self.output_variable_list("c", [ compiler_executable, "-x c"])
 
-		compiler_flags = self.project.settings.compiler_flags or "-Wall -Wextra -Werror -Wno-unused-parameter -std=c99 -pedantic"
+		compiler_flags = self.project.settings.compiler_flags or "-Wall -Wextra -Werror -Wno-unused-parameter -Wno-missing-field-initializers -std=c99 -pedantic"
 		self.output_variable_list("cflags", ["-c", define_string, include_string, compiler_flags])
 
 		linker_flags = self.project.settings.linker_flags or "";
