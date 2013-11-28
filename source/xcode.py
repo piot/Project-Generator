@@ -452,6 +452,7 @@ class XcodeDefaultGroups:
 		self.classes = creator.create(PBXGroup, "Classes", [])
 		self.frameworks = creator.create(PBXGroup, "Frameworks", [])
 		self.products = creator.create(PBXGroup, "Products", [])
+		self.resources = creator.create(PBXGroup, "Resources", [])
 		self.root = creator.create(PBXGroup, name, [self.classes, self.frameworks, self.products])
 
 	def flatten_groups(self):
@@ -528,8 +529,8 @@ class XcodeObjects(XcodeProjectSectionObject):
 
 		self.target_product = self.product(object_factory, default_groups.products, project.name(), project.target_type,  project.settings.library_search_paths, project.settings.framework_search_paths)
 		if project.target_type == "library":
-			header_paths = self.create_header_paths(object_factory, project.header_paths)
-			self.project = self.create_project_for_library(object_factory, project.name(), default_groups.root_group(), default_groups.products, self.target_product, header_paths, project.defines)
+			header_paths = self.create_header_paths(object_factory, project.settings.header_paths)
+			self.project = self.create_project_for_library(object_factory, project.name(), default_groups.root_group(), default_groups.products, self.target_product, header_paths, project.settings.defines,platform)
 		else:
 
 			header_paths = self.create_header_paths(object_factory, project.settings.header_paths)
@@ -579,8 +580,8 @@ class XcodeObjects(XcodeProjectSectionObject):
 		for file_reference in self.source_file_references:
 			file_reference.change_short_name(source_path)
 
-	def create_project_for_library(self, object_factory, name, root_group, products_group, target_product, header_paths, defines):
-		build_configuration_list = self.create_project_configuration_list_for_library(object_factory, name, header_paths, defines)
+	def create_project_for_library(self, object_factory, name, root_group, products_group, target_product, header_paths, defines, platform):
+		build_configuration_list = self.create_project_configuration_list_for_library(object_factory, name, header_paths, defines,platform)
 		return object_factory.create(PBXProject, build_configuration_list, root_group, products_group, [target_product])
 
 	def create_project_for_application(self, object_factory, name, root_group, products_group, target_product, header_paths, defines, configurations, platform):
@@ -743,24 +744,24 @@ class XcodeObjects(XcodeProjectSectionObject):
 
 		return build_configurations
 
-	def create_project_build_settings_for_library(self, header_paths, defines):
-		build_settings = self.create_common_project_build_settings(header_paths, defines)
+	def create_project_build_settings_for_library(self, header_paths, defines,platform):
+		build_settings = self.create_common_project_build_settings(header_paths, defines,platform)
 		build_settings["OTHER_LDFLAGS"] = "-ObjC"
 		return build_settings
 
-	def create_project_release_configuration_for_library(self, object_creator, name, header_paths, defines):
-		build_settings = self.create_project_build_settings_for_library(header_paths, defines)
+	def create_project_release_configuration_for_library(self, object_creator, name, header_paths, defines, platform):
+		build_settings = self.create_project_build_settings_for_library(header_paths, defines,platform)
 		return self.create_build_configuration(object_creator, "Release", build_settings, "project")
 
-	def create_project_debug_configuration_for_library(self, object_creator, name, header_paths, defines):
-		build_settings = self.create_project_build_settings_for_library(header_paths)
+	def create_project_debug_configuration_for_library(self, object_creator, name, header_paths, defines,platform):
+		build_settings = self.create_project_build_settings_for_library(header_paths, defines,platform)
 		build_settings["GCC_OPTIMIZATION_LEVEL"] = 0
 		return self.create_build_configuration(object_creator, "Debug", build_settings, "project")
 
-	def create_project_build_configurations_for_library(self, factory, name, header_paths, defines):
+	def create_project_build_configurations_for_library(self, factory, name, header_paths, defines,platform):
 		build_configurations = [
-			self.create_project_debug_configuration_for_library(factory, name, header_paths, defines),
-			self.create_project_release_configuration_for_library(factory, name, header_paths, defines)
+			self.create_project_debug_configuration_for_library(factory, name, header_paths, defines,platform),
+			self.create_project_release_configuration_for_library(factory, name, header_paths, defines,platform)
 		]
 
 		return build_configurations
@@ -786,8 +787,8 @@ class XcodeObjects(XcodeProjectSectionObject):
 		configuration_list = self.create_configuration_list(object_creator, target_build_configurations, "target")
 		return configuration_list
 
-	def create_project_configuration_list_for_library(self, object_creator, name, header_paths, defines):
-		project_build_configurations = self.create_project_build_configurations_for_library(object_creator, name, header_paths, defines)
+	def create_project_configuration_list_for_library(self, object_creator, name, header_paths, defines,platform):
+		project_build_configurations = self.create_project_build_configurations_for_library(object_creator, name, header_paths, defines,platform)
 		configuration_list = self.create_configuration_list(object_creator, project_build_configurations, "project")
 		return configuration_list
 
@@ -802,8 +803,12 @@ class XcodeObjects(XcodeProjectSectionObject):
 		if product_type == "library":
 			target_configuration_list = self.create_target_configuration_list_for_library(object_factory, name)
 		else:
-			plist_filename = self.file_references_with_extensions(["plist"])[0]
-			plist_file_path = FilePath(plist_filename)
+			extensions = self.file_references_with_extensions(["plist"])
+			if len(extensions) != 0:
+				plist_filename = self.file_references_with_extensions(["plist"])[0]
+				plist_file_path = FilePath(plist_filename)
+			else:
+				plist_file_path = ''
 			target_configuration_list = self.create_target_configuration_list_for_application(object_factory, name, plist_file_path, library_search_paths, framework_search_paths)
 
 
