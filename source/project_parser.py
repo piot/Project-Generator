@@ -58,7 +58,7 @@ class Dependency:
 	def __init__(self):
 		self.filename = ""
 		self.merge = False
-		
+
 class Definer:
 	def __init__(self):
 		self.name = ""
@@ -117,7 +117,6 @@ class Parser:
 			elif sub_node.localName == "compiler":
 				compiler = Compiler()
 				self.parse_object(compiler, sub_node)
-				print("COMPILER: ", compiler.program, compiler.flags)
 				settings.set_compiler(compiler.program, compiler.flags)
 
 			elif sub_node.localName == "linker":

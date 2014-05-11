@@ -78,8 +78,8 @@ class Settings(object):
 		self.framework_names.extend(setting.framework_names)
 		self.framework_search_paths.extend(setting.framework_search_paths)
 		self.root_resource_files.extend(setting.root_resource_files)
-		self.compiler_executable = setting.compiler_executable
-		# self.compiler_flags.extend(setting.compiler_flags)
+		self.compiler_executable = self.compiler_executable or setting.compiler_executable
+		self.compiler_flags.extend(setting.compiler_flags)
 		self.linker_flags.extend(setting.linker_flags)
 
 	def add_define(self, name):
@@ -125,8 +125,7 @@ class Settings(object):
 
 	def set_compiler(self, compiler, flags):
 		self.compiler_executable = compiler
-		self.compiler_flags = flags
-		print("Compiler:", self.compiler_executable, " flags:", self.compiler_flags)
+		self.compiler_flags = flags.split(" ")
 
 	def set_linker(self, linker, flags):
 		self.linker_executable = linker
@@ -137,7 +136,7 @@ class Settings(object):
 
 class Configuration(Settings):
 	def __init__(self, name):
-		super(Configuration, self).__init__()		
+		super(Configuration, self).__init__()
 		self.name = name
 
 class Project:

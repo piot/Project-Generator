@@ -29,7 +29,7 @@ class Makefile:
 		s = ""
 		for dependency in dependencies:
 			s = s + " " + dependency
-		
+
 		self.output_target_dependency(target, s)
 		for command in commands:
 			self.output_command(command)
@@ -37,13 +37,13 @@ class Makefile:
 
 	def output_command(self, command):
 		self.output.output(command)
-	
+
 	def change_extension(self, filename, new_extension):
 		return file_without_extension + "." + new_extension
 
 	def write(self, creator, name):
 		self.output = creator.create_file("/Makefile")
-	
+
 		complete_sources = self.project.settings.source_filenames()
 		objects = []
 		sources = []
@@ -67,14 +67,16 @@ class Makefile:
 			link_string = "";
 
 		if self.project.settings.framework_names:
-			link_string += "-framework " + " -framework ".join(self.project.settings.framework_names)	
-		
+			link_string += "-framework " + " -framework ".join(self.project.settings.framework_names)
+
 		compiler_executable = self.project.settings.compiler_executable or "g++"
 		self.output_variable_list("cc", [compiler_executable])
 		self.output_variable_list("c", [ compiler_executable, "-x c"])
 
-		compiler_flags = self.project.settings.compiler_flags or "-Wall -Wextra -Werror -Wno-unused-parameter -Wno-missing-field-initializers -std=c99 -pedantic"
-		self.output_variable_list("cflags", ["-c", define_string, include_string, compiler_flags])
+		compiler_flags = self.project.settings.compiler_flags or ["-Wall", "-Wextra -Werror -Wno-unused-parameter -Wno-missing-field-initializers -std=c99 -pedantic"]
+		flags_array = ["-c", define_string, include_string]
+		flags_array.extend(compiler_flags)
+		self.output_variable_list("cflags", flags_array)
 
 		linker_flags = self.project.settings.linker_flags or "";
 		self.output_variable_list("ldflags", [link_string])
