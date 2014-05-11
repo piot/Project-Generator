@@ -79,7 +79,7 @@ class Settings(object):
 		self.framework_search_paths.extend(setting.framework_search_paths)
 		self.root_resource_files.extend(setting.root_resource_files)
 		self.compiler_executable = setting.compiler_executable
-		self.compiler_flags.extend(setting.compiler_flags)
+		# self.compiler_flags.extend(setting.compiler_flags)
 		self.linker_flags.extend(setting.linker_flags)
 
 	def add_define(self, name):
