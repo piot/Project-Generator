@@ -599,6 +599,7 @@ class XcodeObjects(XcodeProjectSectionObject):
 			"GCC_PRECOMPILE_PREFIX_HEADER": "YES",
 			"GCC_PREFIX_HEADER": name + "_Prefix.pch",
 			"GCC_THUMB_SUPPORT": "NO",
+			"USE_HEADERMAP": "NO",
 			"INFOPLIST_FILE": plist_filename,
 			"LIBRARY_SEARCH_PATHS": library_search_paths,
 			# "FRAMEWORK_SEARCH_PATHS": framework_search_paths,
