@@ -73,7 +73,7 @@ class Makefile:
 		self.output_variable_list("cc", [compiler_executable])
 		self.output_variable_list("c", [ compiler_executable, "-x c"])
 
-		compiler_flags = self.project.settings.compiler_flags + ["-Wall", "-Wextra -Werror -Wno-unused-parameter -Wno-missing-field-initializers -std=c99 -pedantic"]
+		compiler_flags = self.project.settings.compiler_flags + ["-Wall", "-Wextra", "-Werror", "-Wno-unused-parameter", "-Wno-missing-field-initializers", "-std=c99", "-pedantic"]
 		flags_array = ["-c", define_string, include_string]
 		flags_array.extend(compiler_flags)
 		self.output_variable_list("cflags", flags_array)
@@ -90,8 +90,8 @@ class Makefile:
 		self.output_target_dependencies(self.project.target_name, ["$(sources) $(executable)"], ["@echo 'done'"])
 		self.output_target_dependencies("-include $(objects:.o=.d)", [], [])
 		self.output_target_dependencies("$(executable)", ["$(objects)"], ["@echo Linking $@", "@$(cc) -o $@  $(objects) $(ldflags)"])
-		self.output_target_dependencies(".c.o", [], ["echo Compiling c $@", "@$(c) $(cflags) $< -o $@"])
-		self.output_target_dependencies(".cpp.o", [], ["echo Compiling c++ $@", "@$(cc) $(cflags) $< -o $@"])
+		self.output_target_dependencies(".c.o", [], ["@echo Compiling c $@", "@$(c) $(cflags) $< -o $@"])
+		self.output_target_dependencies(".cpp.o", [], ["@echo Compiling c++ $@", "@$(cc) $(cflags) $< -o $@"])
 		self.output_target_dependencies("depend", [], ["makedepend -f " + self.output.target_path + "Makefile -- $(cflags) -- $(sources) -I" + include_string])
 		self.close()
 		self.output.close()
