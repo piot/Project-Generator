@@ -52,7 +52,7 @@ class Makefile:
 			path = project_path.Path(source)
 			relative_source = path.relative(self.source_root)
 			file_without_extension, extension = os.path.splitext(relative_source)
-			if extension == ".cpp" or extension == ".c":
+			if extension == ".cpp" or extension == ".c" or extension == ".swift":
 				sources.append(relative_source)
 				objects.append(file_without_extension + ".o")
 

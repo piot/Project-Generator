@@ -92,7 +92,7 @@ class Settings(object):
 		self.root_source_files.search_recursive(path, header_extensions, empty_exclude_list)
 
 	def add_source_directory(self, path, recursive, exclude_list):
-		extensions = ["cpp", "c", "h", "pch", "xib", "m", "mm"]
+		extensions = ["cpp", "c", "h", "pch", "xib", "m", "mm", "swift"]
 		if recursive:
 			self.root_source_files.search_recursive(path, extensions, exclude_list)
 		else:
