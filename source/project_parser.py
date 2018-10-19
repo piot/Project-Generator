@@ -122,7 +122,6 @@ class Parser:
 			elif sub_node.localName == "linker":
 				linker = Linker()
 				self.parse_object(linker, sub_node)
-				print("LINKER: ", linker.program, linker.flags)
 				settings.set_linker(linker.program, linker.flags)
 
 			elif sub_node.localName == "platform":

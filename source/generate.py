@@ -34,7 +34,7 @@ class Options:
 		self.data_path = ""
 		self.resource_path = ""
 		self.project_name = ""
-		self.target_path = ""
+		self.target_path = "output/"
 
 options = Options()
 
@@ -62,6 +62,7 @@ def touch(filename):
 		try:
 			os.makedirs(os.path.dirname(filename))
 		except os.error as e:
+			print("PATH:" + filename)
 			import errno
 			if e.errno != errno.EEXIST:
 				raise
@@ -81,7 +82,7 @@ def create_project(filename, platform_string, data_path, resource_path):
 			target_project.settings.add_resource_directory(resource_root, False, [])
 
 		resource_root = os.path.normpath(resource_path) + "/" + platform_string + "/"
-		# print("Resource:", resource_root)
+		print("Resource:", resource_root)
 		target_project.settings.add_resource_directory(resource_root, False, [])
 
 
@@ -134,6 +135,7 @@ elif options.generator_name == "codeblocks":
 	generator_name = "codeblocks.CodeBlocks"
 elif options.generator_name == "codelite":
 	generator_name = "codelite.CodeLite"
+
 
 generator = get_class(generator_name)(target_project, source_root, options.platform_string)
 

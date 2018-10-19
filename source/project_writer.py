@@ -5,6 +5,7 @@ class ProjectFileCreator:
 		self.prefix = prefix
 
 	def create_file(self, name):
+		print("PREFIX:" + self.prefix)
 		return ProjectFileOutput(self.prefix + name)
 
 class ProjectOutput:
@@ -32,6 +33,7 @@ class ProjectOutput:
 class ProjectFileOutput(ProjectOutput):
 	def __init__(self, filename):
 		ProjectOutput.__init__(self)
+		print("path:" + filename)
 		import errno
 		try:
 			os.makedirs(os.path.dirname(filename))

@@ -210,7 +210,7 @@ class PBXGroup(XcodeProjectObject):
 	def __init__(self, xcode_id, name, children):
 		self.children = children
 		self.name = name
-			
+
 		self.sourceTree = "<group>"
 		comment = name
 		XcodeProjectObject.__init__(self, xcode_id, comment)
@@ -431,9 +431,9 @@ def split_directories(path):
 
 def create_directory_groups(object_factory, parent_group, source_root, absolute_filename):
 	relative_filename = project_path.Path(absolute_filename).relative(source_root)
-	
+
 	absolute_directory = source_root
-	
+
 	directories = split_directories(relative_filename)
 	for directory in directories:
 		absolute_directory = os.path.normpath(os.path.join(absolute_directory, directory))
@@ -512,9 +512,9 @@ class XcodeObjects(XcodeProjectSectionObject):
 			framework_names.append(name + ".framework")
 
 
-			
+
 		framework_build_files = self.create_build_files_for_extension(object_factory, source_root, default_groups.frameworks, framework_names, ["framework"], "System/Library/Frameworks/")
-		
+
 		dylib_build_files = self.create_build_files_for_extension(object_factory, source_root, default_groups.frameworks, project.library_filenames, ["dylib"], "System/Library/Frameworks/")
 
 		all_framework_like_files = framework_build_files + dylib_build_files + library_build_files
@@ -612,6 +612,10 @@ class XcodeObjects(XcodeProjectSectionObject):
 		build_settings["COPY_PHASE_STRIP"] = "NO"
 		build_settings["GCC_DYNAMIC_NO_PIC"] = "NO"
 		build_settings["GCC_OPTIMIZATION_LEVEL"] = 0
+		build_settings["PRODUCT_BUNDLE_IDENTIFIER"] = "com.outbreakstudios.mochascript"
+		build_settings["PRODUCT_NAME"] = "Mochascript"
+		build_settings["GCC_C_LANGUAGE_STANDARD"] = "c99"
+		build_settings["IPHONEOS_DEPLOYMENT_TARGET"] = 8.0
 		return self.create_build_configuration(object_creator, "Debug", build_settings, "target")
 
 	def create_target_release_configuration_for_application(self, object_creator, name, plist_filename, library_search_paths, framework_search_paths):
@@ -642,7 +646,7 @@ class XcodeObjects(XcodeProjectSectionObject):
 	def create_common_target_build_settings_for_library(self, name):
 		build_settings = {
 			"ALWAYS_SEARCH_USER_PATHS": "NO",
-			"ARCHS": "$(ARCHS_STANDARD_32_BIT)",
+			"ARCHS": "$(ARCHS_STANDARD)",
 			"COPY_PHASE_STRIP": "NO",
 			"DSTROOT": "/tmp/" + name  + ".dst",
 			"GCC_MODEL_TUNING": "G5",
@@ -680,20 +684,20 @@ class XcodeObjects(XcodeProjectSectionObject):
 	def create_common_project_build_settings(self, header_paths, defines, platform):
 		if platform == "ios":
 			build_settings = {
-				"ARCHS": "$(ARCHS_STANDARD_32_BIT)",
+				"ARCHS": "$(ARCHS_STANDARD)",
 				"GCC_C_LANGUAGE_STANDARD": "c99",
 				"GCC_WARN_ABOUT_RETURN_TYPE": "YES",
 				"GCC_WARN_UNUSED_VARIABLE": "YES",
 				"GCC_THUMB_SUPPORT": "NO",
 				"COMPRESS_PNG_FILES": "NO",
 				"SDKROOT": "iphoneos",
-				"IPHONEOS_DEPLOYMENT_TARGET": 5.1,
+				"IPHONEOS_DEPLOYMENT_TARGET": 8.0,
 				"HEADER_SEARCH_PATHS": header_paths,
 				"TARGETED_DEVICE_FAMILY": "1,2"
 			}
 		elif platform == "mac_os_x":
 			build_settings = {
-				"ARCHS": "$(ARCHS_STANDARD_32_BIT)",
+				"ARCHS": "$(ARCHS_STANDARD)",
 				"GCC_C_LANGUAGE_STANDARD": "c99",
 				"GCC_WARN_ABOUT_RETURN_TYPE": "YES",
 				"GCC_WARN_UNUSED_VARIABLE": "YES",
@@ -702,7 +706,7 @@ class XcodeObjects(XcodeProjectSectionObject):
 				"SDKROOT": "macosx",
 				"HEADER_SEARCH_PATHS": header_paths
 			}
-		
+
 		build_settings["GCC_PREPROCESSOR_DEFINITIONS"] = defines
 
 		return build_settings
@@ -809,6 +813,7 @@ class XcodeObjects(XcodeProjectSectionObject):
 				plist_filename = self.file_references_with_extensions(["plist"])[0]
 				plist_file_path = FilePath(plist_filename)
 			else:
+				print("WE HAVE A PROBLEM! NO PLIST!")
 				plist_file_path = ''
 			target_configuration_list = self.create_target_configuration_list_for_application(object_factory, name, plist_file_path, library_search_paths, framework_search_paths)
 
@@ -832,6 +837,7 @@ class XcodeObjects(XcodeProjectSectionObject):
 		for file_reference in self.source_file_references:
 			filename = file_reference.path
 			extension = os.path.splitext(filename)[1][1:]
+			# print("found " + filename)
 			if extension in extensions_to_match:
 				matching_file_references.append(file_reference)
 		return matching_file_references
@@ -854,7 +860,7 @@ class XcodeObjects(XcodeProjectSectionObject):
 		filename_reference = object_factory.create(PBXFileReference, filename)
 		filename_reference.name = os.path.basename(filename)
 		self.source_file_references.append(filename_reference)
-		return filename_reference		
+		return filename_reference
 
 
 	def create_build_file(self, object_factory, source_root, filename, root_group):
@@ -879,6 +885,8 @@ class XcodeObjects(XcodeProjectSectionObject):
 	def generate_file_references(self, source_filenames, extensions, object_factory, root_group):
 		for filename in source_filenames:
 			extension = os.path.splitext(filename)[1][1:]
+			if extension == "plist":
+				print("file references" + filename)
 			if extension in extensions:
 				self.create_file_reference(object_factory, root_group, filename)
 
@@ -889,7 +897,7 @@ class Xcode(XcodeProjectObjectRaw):
 	def __init__(self, project, source_root, platform):
 		self.archiveVersion = 1
 		self.classes = {}
-		self.objectVersion = 46
+		self.objectVersion = 48
 		self.objects = XcodeObjects(project, source_root, platform)
 		self.rootObject = self.objects.project
 		comment = "Xcode"
@@ -902,7 +910,7 @@ class Xcode(XcodeProjectObjectRaw):
 		self.objects.change_target_path_for_file_references(build_path)
 		document = XcodeWriterDocument()
 		self.push(document, output)
-		
+
 		XcodeProjectObjectRaw.write(self, output)
 		document.close(output)
 		output.close()

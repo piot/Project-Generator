@@ -42,7 +42,7 @@ class Makefile:
 		return file_without_extension + "." + new_extension
 
 	def write(self, creator, name):
-		self.output = creator.create_file("/Makefile")
+		self.output = creator.create_file("Makefile")
 
 		complete_sources = self.project.settings.source_filenames()
 		objects = []
@@ -59,7 +59,7 @@ class Makefile:
 		includes = self.project.settings.include_paths()
 		include_string = " -I" + " -I".join(includes)
 
-		define_string = "-D" + " -D".join(self.project.configurations["debug"].defines + self.project.settings.defines)
+		define_string = "-D" + " -D".join(self.project.configurations["release"].defines + self.project.settings.defines)
 
 		if self.project.settings.library_filenames:
 			link_string = "-l" + " -l".join(self.project.settings.library_filenames)
@@ -69,16 +69,36 @@ class Makefile:
 		if self.project.settings.framework_names:
 			link_string += "-framework " + " -framework ".join(self.project.settings.framework_names)
 
-		compiler_executable = self.project.settings.compiler_executable or "g++"
-		self.output_variable_list("cc", [compiler_executable])
-		self.output_variable_list("c", [ compiler_executable, "-x c"])
+		compiler_executable = self.project.settings.compiler_executable
+		compiler_flags = self.project.settings.compiler_flags
+		if compiler_executable is None:
+			if self.project.platform_string == "webassembly":
+				compiler_executable = "emcc"
+				compiler_flags = compiler_flags + ["-s WASM=1 -s USE_SDL=2 -s ASSERTIONS=2"] #-O3
+			else:
+				compiler_executable = self.project.settings.compiler_executable or "clang"
 
-		compiler_flags = self.project.settings.compiler_flags + ["-Wall", "-Wextra -Werror -Wno-unused-parameter -Wno-missing-field-initializers -std=c99 -pedantic"]
-		flags_array = ["-c", define_string, include_string]
+		print("compiler:" + compiler_executable)
+
+
+		self.output_variable_list("cc", [compiler_executable])
+		self.output_variable_list("c", [ compiler_executable])
+
+		# "-Wno-padded", "-Wno-comma", "-Wno-double-promotion","-Wno-cast-qual", "-Wno-disabled-macro-expansion", "-Wno-switch-enum","-Wno-sign-conversion", "-Wno-unused-parameter",
+		compiler_flags = compiler_flags + ["", "-Weverything", "-Wextra", "-pedantic",  '-Wno-padded', '-Wno-switch-enum', '-Wno-error=unused-variable', '-Wno-disabled-macro-expansion', '-g4' ] #, -g '-Werror', '-Wno-error=cast-qual'] #"-Werror"
+		flags_array = [define_string, include_string]
 		flags_array.extend(compiler_flags)
 		self.output_variable_list("cflags", flags_array)
 
-		linker_flags = self.project.settings.linker_flags or "";
+
+		linker_flags = self.project.settings.linker_flags or [];
+
+		if self.project.platform_string == "webassembly":
+			print("TJOHO!")
+			link_string += " ".join(['-o', 'index.html', '-s','FETCH=1', '-s', 'USE_GLFW=3', '-s', 'ALLOW_MEMORY_GROWTH=1', '-s', 'DEMANGLE_SUPPORT=1', '--pre-js', '$$EMSCRIPTEN/src/emscripten-source-map.min.js'])
+		else:
+			link_string += " ".join(['-o',self.project.target_name])
+
 		self.output_variable_list("ldflags", [link_string])
 
 		self.output_variable_list("sources", sources)
@@ -89,8 +109,8 @@ class Makefile:
 		self.output_target_dependencies("clean", "", ["@rm -f $(objects)", "@echo clean done!"])
 		self.output_target_dependencies(self.project.target_name, ["$(sources) $(executable)"], ["@echo 'done'"])
 		self.output_target_dependencies("-include $(objects:.o=.d)", [], [])
-		self.output_target_dependencies("$(executable)", ["$(objects)"], ["@echo Linking $@", "@$(cc) -o $@  $(objects) $(ldflags)"])
-		self.output_target_dependencies(".c.o", [], ["echo Compiling c $@", "@$(c) $(cflags) $< -o $@"])
+		self.output_target_dependencies("$(executable)", ["$(objects)"], ["@echo Linking $@ " + link_string, "@$(c) $(cflags) $(objects) " + link_string]) # webassembly: -o index.html -s WASM=1 -s FETCH=1 -s USE_GLFW=3 -s ALLOW_MEMORY_GROWTH=1
+		self.output_target_dependencies(".c.o", [], ["echo Compiling c $@", "@$(c) -c $(cflags) $< -o $@"])
 		self.output_target_dependencies(".cpp.o", [], ["echo Compiling c++ $@", "@$(cc) $(cflags) $< -o $@"])
 		self.output_target_dependencies("depend", [], ["makedepend -f " + self.output.target_path + "Makefile -- $(cflags) -- $(sources) -I" + include_string])
 		self.close()
