@@ -34,7 +34,9 @@ class ProjectFileOutput(ProjectOutput):
 		ProjectOutput.__init__(self)
 		import errno
 		try:
-			os.makedirs(os.path.dirname(filename))
+			directory = os.path.dirname(filename)
+			print("Making directories:" + directory)
+			os.makedirs(directory)
 		except os.error as e:
 			if e.errno != errno.EEXIST:
 				raise
